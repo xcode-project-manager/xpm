@@ -3,14 +3,63 @@ import TSCBasic
 @testable import TuistCore
 
 final class MockGraphTraverser: GraphTraversing {
+    var invokedNameGetter = false
+    var invokedNameGetterCount = 0
+    var stubbedName: String! = ""
+
+    var name: String {
+        invokedNameGetter = true
+        invokedNameGetterCount += 1
+        return stubbedName
+    }
+
+    var invokedHasPackagesGetter = false
+    var invokedHasPackagesGetterCount = 0
+    var stubbedHasPackages: Bool! = false
+
+    var hasPackages: Bool {
+        invokedHasPackagesGetter = true
+        invokedHasPackagesGetterCount += 1
+        return stubbedHasPackages
+    }
+
+    var invokedPathGetter = false
+    var invokedPathGetterCount = 0
+    var stubbedPath: AbsolutePath!
+
+    var path: AbsolutePath {
+        invokedPathGetter = true
+        invokedPathGetterCount += 1
+        return stubbedPath
+    }
+
+    var invokedWorkspaceGetter = false
+    var invokedWorkspaceGetterCount = 0
+    var stubbedWorkspace: Workspace!
+
+    var workspace: Workspace {
+        invokedWorkspaceGetter = true
+        invokedWorkspaceGetterCount += 1
+        return stubbedWorkspace
+    }
+
+    var invokedProjectsGetter = false
+    var invokedProjectsGetterCount = 0
+    var stubbedProjects: Set<Project>! = []
+
+    var projects: Set<Project> {
+        invokedProjectsGetter = true
+        invokedProjectsGetterCount += 1
+        return stubbedProjects
+    }
 
     var invokedTarget = false
     var invokedTargetCount = 0
     var invokedTargetParameters: (path: AbsolutePath, name: String)?
     var invokedTargetParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedTargetResult: Target!
+    var stubbedTargetResult: ValueGraphTarget!
 
-    func target(path: AbsolutePath, name: String) -> Target? {
+    func target(path: AbsolutePath, name: String) -> ValueGraphTarget? {
         invokedTarget = true
         invokedTargetCount += 1
         invokedTargetParameters = (path, name)
@@ -22,9 +71,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedTargetsCount = 0
     var invokedTargetsParameters: (path: AbsolutePath, Void)?
     var invokedTargetsParametersList = [(path: AbsolutePath, Void)]()
-    var stubbedTargetsResult: Set<Target>! = []
+    var stubbedTargetsResult: Set<ValueGraphTarget>! = []
 
-    func targets(at path: AbsolutePath) -> Set<Target> {
+    func targets(at path: AbsolutePath) -> Set<ValueGraphTarget> {
         invokedTargets = true
         invokedTargetsCount += 1
         invokedTargetsParameters = (path, ())
@@ -36,9 +85,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedDirectTargetDependenciesCount = 0
     var invokedDirectTargetDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedDirectTargetDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedDirectTargetDependenciesResult: Set<Target>! = []
+    var stubbedDirectTargetDependenciesResult: Set<ValueGraphTarget>! = []
 
-    func directTargetDependencies(path: AbsolutePath, name: String) -> Set<Target> {
+    func directTargetDependencies(path: AbsolutePath, name: String) -> Set<ValueGraphTarget> {
         invokedDirectTargetDependencies = true
         invokedDirectTargetDependenciesCount += 1
         invokedDirectTargetDependenciesParameters = (path, name)
@@ -50,9 +99,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedAppExtensionDependenciesCount = 0
     var invokedAppExtensionDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedAppExtensionDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedAppExtensionDependenciesResult: Set<Target>! = []
+    var stubbedAppExtensionDependenciesResult: Set<ValueGraphTarget>! = []
 
-    func appExtensionDependencies(path: AbsolutePath, name: String) -> Set<Target> {
+    func appExtensionDependencies(path: AbsolutePath, name: String) -> Set<ValueGraphTarget> {
         invokedAppExtensionDependencies = true
         invokedAppExtensionDependenciesCount += 1
         invokedAppExtensionDependenciesParameters = (path, name)
@@ -64,9 +113,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedResourceBundleDependenciesCount = 0
     var invokedResourceBundleDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedResourceBundleDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedResourceBundleDependenciesResult: Set<Target>! = []
+    var stubbedResourceBundleDependenciesResult: Set<ValueGraphTarget>! = []
 
-    func resourceBundleDependencies(path: AbsolutePath, name: String) -> Set<Target> {
+    func resourceBundleDependencies(path: AbsolutePath, name: String) -> Set<ValueGraphTarget> {
         invokedResourceBundleDependencies = true
         invokedResourceBundleDependenciesCount += 1
         invokedResourceBundleDependenciesParameters = (path, name)
@@ -78,9 +127,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedTestTargetsDependingOnCount = 0
     var invokedTestTargetsDependingOnParameters: (path: AbsolutePath, name: String)?
     var invokedTestTargetsDependingOnParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedTestTargetsDependingOnResult: Set<Target>! = []
+    var stubbedTestTargetsDependingOnResult: Set<ValueGraphTarget>! = []
 
-    func testTargetsDependingOn(path: AbsolutePath, name: String) -> Set<Target> {
+    func testTargetsDependingOn(path: AbsolutePath, name: String) -> Set<ValueGraphTarget> {
         invokedTestTargetsDependingOn = true
         invokedTestTargetsDependingOnCount += 1
         invokedTestTargetsDependingOnParameters = (path, name)
@@ -106,14 +155,13 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedAppClipsDependencyCount = 0
     var invokedAppClipsDependencyParameters: (path: AbsolutePath, name: String)?
     var invokedAppClipsDependencyParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedAppClipsDependencyResult: Target!
+    var stubbedAppClipsDependencyResult: ValueGraphTarget!
 
-    func appClipsDependency(path: AbsolutePath, name: String) -> Target? {
+    func appClipsDependency(path: AbsolutePath, name: String) -> ValueGraphTarget? {
         invokedAppClipsDependency = true
         invokedAppClipsDependencyCount += 1
         invokedAppClipsDependencyParameters = (path, name)
         invokedAppClipsDependencyParametersList.append((path, name))
         return stubbedAppClipsDependencyResult
     }
-    
 }

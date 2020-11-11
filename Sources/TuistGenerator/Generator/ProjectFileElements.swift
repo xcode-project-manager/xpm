@@ -45,13 +45,15 @@ class ProjectFileElements {
     }
 
     func generateProjectFiles(project: Project,
-                              graph: Graph,
+                              path: AbsolutePath,
+                              targets: Set<Target>,
+                              graphTraverser _: GraphTraversing,
                               groups: ProjectGroups,
                               pbxproj: PBXProj) throws
     {
         var files = Set<GroupFileElement>()
 
-        try project.targets.forEach { target in
+        try targets.forEach { target in
             try files.formUnion(targetFiles(target: target))
         }
         let projectFileElements = projectFiles(project: project)
@@ -68,13 +70,13 @@ class ProjectFileElements {
                      sourceRootPath: project.sourceRootPath)
 
         /// Playgrounds
-        generatePlaygrounds(path: project.path,
+        generatePlaygrounds(path: path,
                             groups: groups,
                             pbxproj: pbxproj,
                             sourceRootPath: project.sourceRootPath)
 
         // Products
-        let directProducts = project.targets.map {
+        let directProducts = targets.map {
             GraphDependencyReference.product(target: $0.name, productName: $0.productNameWithExtension)
         }
 

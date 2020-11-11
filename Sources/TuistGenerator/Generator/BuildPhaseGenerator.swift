@@ -326,7 +326,7 @@ final class BuildPhaseGenerator: BuildPhaseGenerating {
                                         resourcesBuildPhase: PBXResourcesBuildPhase)
     {
         let bundles = graphTraverser.resourceBundleDependencies(path: path, name: target.name)
-        let refs = bundles.compactMap { fileElements.product(target: $0.name) }
+        let refs = bundles.compactMap { fileElements.product(target: $0.target.name) }
 
         refs.forEach {
             let pbxBuildFile = PBXBuildFile(file: $0)
@@ -349,7 +349,7 @@ final class BuildPhaseGenerator: BuildPhaseGenerating {
         pbxproj.add(object: appExtensionsBuildPhase)
         pbxTarget.buildPhases.append(appExtensionsBuildPhase)
 
-        let refs = appExtensions.compactMap { fileElements.product(target: $0.name) }
+        let refs = appExtensions.compactMap { fileElements.product(target: $0.target.name) }
 
         refs.forEach {
             let pbxBuildFile = PBXBuildFile(file: $0, settings: ["ATTRIBUTES": ["RemoveHeadersOnCopy"]])
@@ -366,7 +366,7 @@ final class BuildPhaseGenerator: BuildPhaseGenerating {
                                       pbxproj: PBXProj) throws
     {
         let targetDependencies = graphTraverser.directTargetDependencies(path: path, name: target.name)
-        let watchApps = targetDependencies.filter { $0.product == .watch2App }
+        let watchApps = targetDependencies.filter { $0.target.product == .watch2App }
         guard !watchApps.isEmpty else { return }
 
         let embedWatchAppBuildPhase = PBXCopyFilesBuildPhase(dstPath: "$(CONTENTS_FOLDER_PATH)/Watch",
@@ -375,7 +375,7 @@ final class BuildPhaseGenerator: BuildPhaseGenerating {
         pbxproj.add(object: embedWatchAppBuildPhase)
         pbxTarget.buildPhases.append(embedWatchAppBuildPhase)
 
-        let refs = watchApps.compactMap { fileElements.product(target: $0.name) }
+        let refs = watchApps.compactMap { fileElements.product(target: $0.target.name) }
 
         refs.forEach {
             let pbxBuildFile = PBXBuildFile(file: $0, settings: ["ATTRIBUTES": ["RemoveHeadersOnCopy"]])
@@ -405,7 +405,7 @@ final class BuildPhaseGenerator: BuildPhaseGenerating {
         pbxproj.add(object: embedAppClipsBuildPhase)
         pbxTarget.buildPhases.append(embedAppClipsBuildPhase)
 
-        let refs = fileElements.product(target: appClips.name)
+        let refs = fileElements.product(target: appClips.target.name)
 
         let pbxBuildFile = PBXBuildFile(file: refs, settings: ["ATTRIBUTES": ["RemoveHeadersOnCopy"]])
         pbxproj.add(object: pbxBuildFile)

@@ -8,9 +8,14 @@ protocol ProjectDescriptorGenerating: AnyObject {
     /// Generates the given project.
     /// - Parameters:
     ///   - project: Project to be generated.
-    ///   - graph: Dependencies graph.
+    ///   - path: The path to the directory that contains the project.
+    ///   - targets: Project's targets.
+    ///   - graphTraverser: An instance to traverse the graph.
     /// - Returns: Generated project descriptor
-    func generate(project: Project, graph: Graph) throws -> ProjectDescriptor
+    func generate(project: Project,
+                  path: AbsolutePath,
+                  targets: Set<Target>,
+                  graphTraverser: GraphTraversing) throws -> ProjectDescriptor
 }
 
 final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
@@ -63,20 +68,24 @@ final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
 
     // swiftlint:disable:next function_body_length
     func generate(project: Project,
-                  graph: Graph) throws -> ProjectDescriptor
+                  path: AbsolutePath,
+                  targets: Set<Target>,
+                  graphTraverser: GraphTraversing) throws -> ProjectDescriptor
     {
         logger.notice("Generating project \(project.name)")
 
         let workspaceData = XCWorkspaceData(children: [])
         let workspace = XCWorkspace(data: workspaceData)
-        let projectConstants = try determineProjectConstants(graph: graph)
+        let projectConstants = try determineProjectConstants(graphTraverser: graphTraverser)
         let pbxproj = PBXProj(objectVersion: projectConstants.objectVersion,
                               archiveVersion: projectConstants.archiveVersion,
                               classes: [:])
         let groups = ProjectGroups.generate(project: project, pbxproj: pbxproj)
         let fileElements = ProjectFileElements()
         try fileElements.generateProjectFiles(project: project,
-                                              graph: graph,
+                                              path: path,
+                                              targets: targets,
+                                              graphTraverser: graphTraverser,
                                               groups: groups,
                                               pbxproj: pbxproj)
         let configurationList = try configGenerator.generateProjectConfig(project: project, pbxproj: pbxproj, fileElements: fileElements)
@@ -87,10 +96,12 @@ final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
                                                 pbxproj: pbxproj)
 
         let nativeTargets = try generateTargets(project: project,
+                                                path: path,
+                                                targets: targets,
                                                 pbxproj: pbxproj,
                                                 pbxProject: pbxProject,
                                                 fileElements: fileElements,
-                                                graph: graph)
+                                                graphTraverser: graphTraverser)
 
         generateTestTargetIdentity(project: project,
                                    pbxproj: pbxproj,
@@ -107,7 +118,7 @@ final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
 
         let schemes = try schemeDescriptorsGenerator.generateProjectSchemes(project: project,
                                                                             generatedProject: generatedProject,
-                                                                            graph: graph)
+                                                                            graphTraverser: graphTraverser)
 
         let xcodeProj = XcodeProj(workspace: workspace, pbxproj: pbxproj)
         return ProjectDescriptor(path: project.path,
@@ -148,29 +159,31 @@ final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
     }
 
     private func generateTargets(project: Project,
+                                 path: AbsolutePath,
+                                 targets: Set<Target>,
                                  pbxproj: PBXProj,
                                  pbxProject: PBXProject,
                                  fileElements: ProjectFileElements,
-                                 graph: Graph) throws -> [String: PBXNativeTarget]
+                                 graphTraverser: GraphTraversing) throws -> [String: PBXNativeTarget]
     {
         var nativeTargets: [String: PBXNativeTarget] = [:]
-        try project.targets.forEach { target in
+        try targets.sorted().forEach { target in
             let nativeTarget = try targetGenerator.generateTarget(target: target,
                                                                   project: project,
                                                                   pbxproj: pbxproj,
                                                                   pbxProject: pbxProject,
                                                                   projectSettings: project.settings,
                                                                   fileElements: fileElements,
-                                                                  path: project.path,
-                                                                  graph: graph)
+                                                                  path: path,
+                                                                  graphTraverser: graphTraverser)
             nativeTargets[target.name] = nativeTarget
         }
 
         /// Target dependencies
-        try targetGenerator.generateTargetDependencies(path: project.path,
-                                                       targets: project.targets,
+        try targetGenerator.generateTargetDependencies(path: path,
+                                                       targets: targets,
                                                        nativeTargets: nativeTargets,
-                                                       graph: graph)
+                                                       graphTraverser: graphTraverser)
         return nativeTargets
     }
 
@@ -237,8 +250,8 @@ final class ProjectDescriptorGenerator: ProjectDescriptorGenerating {
         pbxProject.packages = packageReferences.sorted { $0.key < $1.key }.map { $1 }
     }
 
-    private func determineProjectConstants(graph: Graph) throws -> ProjectConstants {
-        if !graph.packages.isEmpty {
+    private func determineProjectConstants(graphTraverser: GraphTraversing) throws -> ProjectConstants {
+        if graphTraverser.hasPackages {
             return .xcode11
         } else {
             return .xcode10

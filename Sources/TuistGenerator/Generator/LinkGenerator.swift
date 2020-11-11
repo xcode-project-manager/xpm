@@ -49,7 +49,7 @@ protocol LinkGenerating: AnyObject {
                        fileElements: ProjectFileElements,
                        path: AbsolutePath,
                        sourceRootPath: AbsolutePath,
-                       graph: Graph) throws
+                       graphTraverser: GraphTraversing) throws
 }
 
 /// When generating build settings like "framework search path", some of the path might be relative to paths
@@ -88,7 +88,7 @@ final class LinkGenerator: LinkGenerating {
                        fileElements: ProjectFileElements,
                        path: AbsolutePath,
                        sourceRootPath: AbsolutePath,
-                       graph: Graph) throws
+                       graphTraverser _: GraphTraversing) throws
     {
         let embeddableFrameworks = try graph.embeddableFrameworks(path: path, name: target.name)
         let linkableModules = try graph.linkableDependencies(path: path, name: target.name)
