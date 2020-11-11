@@ -13,22 +13,22 @@ public class ValueGraphTraverser: GraphTraversing {
         graph.targets[path]?[name]
     }
 
-    public func targets(at path: AbsolutePath) -> [Target] {
+    public func targets(at path: AbsolutePath) -> Set<Target> {
         guard let targets = graph.targets[path] else { return [] }
-        return Array(targets.values).sorted()
+        return Set(targets.values)
     }
 
-    public func directTargetDependencies(path: AbsolutePath, name: String) -> [Target] {
+    public func directTargetDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         guard let dependencies = graph.dependencies[.target(name: name, path: path)] else { return [] }
-        return dependencies.flatMap { (dependency) -> [Target] in
+        return Set(dependencies.flatMap { (dependency) -> [Target] in
             guard case let ValueGraphDependency.target(dependencyName, dependencyPath) = dependency else { return [] }
             guard let projectDependencies = graph.targets[dependencyPath], let dependencyTarget = projectDependencies[dependencyName] else { return []
             }
             return [dependencyTarget]
-        }.sorted()
+        })
     }
 
-    public func resourceBundleDependencies(path: AbsolutePath, name: String) -> [Target] {
+    public func resourceBundleDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         guard let target = graph.targets[path]?[name] else { return [] }
         guard target.supportsResources else { return [] }
 
@@ -45,14 +45,13 @@ public class ValueGraphTraverser: GraphTraversing {
                                          skip: canHostResources)
         let bundleTargets = bundles.compactMap(target(from:))
 
-        return bundleTargets.sorted()
+        return Set(bundleTargets)
     }
 
-    public func testTargetsDependingOn(path: AbsolutePath, name: String) -> [Target] {
-        graph.targets[path]?.values
-            .filter { $0.product.testsBundle }
-            .filter { graph.dependencies[.target(name: $0.name, path: path)]?.contains(.target(name: name, path: path)) == true }
-            .sorted() ?? []
+    public func testTargetsDependingOn(path: AbsolutePath, name: String) -> Set<Target> {
+        Set(graph.targets[path]?.values
+                .filter { $0.product.testsBundle }
+                .filter { graph.dependencies[.target(name: $0.name, path: path)]?.contains(.target(name: name, path: path)) == true } ?? [])
     }
 
     public func target(from dependency: ValueGraphDependency) -> Target? {
@@ -62,13 +61,12 @@ public class ValueGraphTraverser: GraphTraversing {
         return graph.targets[path]?[name]
     }
 
-    public func appExtensionDependencies(path: AbsolutePath, name: String) -> [Target] {
+    public func appExtensionDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         let validProducts: [Product] = [
             .appExtension, .stickerPackExtension, .watch2Extension, .messagesExtension,
         ]
-        return directTargetDependencies(path: path, name: name)
-            .filter { validProducts.contains($0.product) }
-            .sorted()
+        return Set(directTargetDependencies(path: path, name: name)
+                    .filter { validProducts.contains($0.product) })
     }
 
     public func appClipsDependency(path: AbsolutePath, name: String) -> Target? {
@@ -76,18 +74,17 @@ public class ValueGraphTraverser: GraphTraversing {
             .first { $0.product == .appClip }
     }
 
-    public func directStaticDependencies(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
-        graph.dependencies[.target(name: name, path: path)]?
-            .compactMap { (dependency: ValueGraphDependency) -> (path: AbsolutePath, name: String)? in
-                guard case let ValueGraphDependency.target(name, path) = dependency else {
-                    return nil
+    public func directStaticDependencies(path: AbsolutePath, name: String) -> Set<GraphDependencyReference> {
+        Set(graph.dependencies[.target(name: name, path: path)]?
+                .compactMap { (dependency: ValueGraphDependency) -> (path: AbsolutePath, name: String)? in
+                    guard case let ValueGraphDependency.target(name, path) = dependency else {
+                        return nil
+                    }
+                    return (path, name)
                 }
-                return (path, name)
-            }
-            .compactMap { graph.targets[$0.path]?[$0.name] }
-            .filter { $0.product.isStatic }
-            .map { .product(target: $0.name, productName: $0.productNameWithExtension) }
-            .sorted() ?? []
+                .compactMap { graph.targets[$0.path]?[$0.name] }
+                .filter { $0.product.isStatic }
+                .map { .product(target: $0.name, productName: $0.productNameWithExtension) } ?? [])
     }
 
     /// It traverses the depdency graph and returns all the dependencies.

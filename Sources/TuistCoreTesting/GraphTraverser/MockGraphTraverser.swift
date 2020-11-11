@@ -3,6 +3,7 @@ import TSCBasic
 @testable import TuistCore
 
 final class MockGraphTraverser: GraphTraversing {
+
     var invokedTarget = false
     var invokedTargetCount = 0
     var invokedTargetParameters: (path: AbsolutePath, name: String)?
@@ -21,9 +22,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedTargetsCount = 0
     var invokedTargetsParameters: (path: AbsolutePath, Void)?
     var invokedTargetsParametersList = [(path: AbsolutePath, Void)]()
-    var stubbedTargetsResult: [Target]! = []
+    var stubbedTargetsResult: Set<Target>! = []
 
-    func targets(at path: AbsolutePath) -> [Target] {
+    func targets(at path: AbsolutePath) -> Set<Target> {
         invokedTargets = true
         invokedTargetsCount += 1
         invokedTargetsParameters = (path, ())
@@ -35,9 +36,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedDirectTargetDependenciesCount = 0
     var invokedDirectTargetDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedDirectTargetDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedDirectTargetDependenciesResult: [Target]! = []
+    var stubbedDirectTargetDependenciesResult: Set<Target>! = []
 
-    func directTargetDependencies(path: AbsolutePath, name: String) -> [Target] {
+    func directTargetDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         invokedDirectTargetDependencies = true
         invokedDirectTargetDependenciesCount += 1
         invokedDirectTargetDependenciesParameters = (path, name)
@@ -49,9 +50,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedAppExtensionDependenciesCount = 0
     var invokedAppExtensionDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedAppExtensionDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedAppExtensionDependenciesResult: [Target]! = []
+    var stubbedAppExtensionDependenciesResult: Set<Target>! = []
 
-    func appExtensionDependencies(path: AbsolutePath, name: String) -> [Target] {
+    func appExtensionDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         invokedAppExtensionDependencies = true
         invokedAppExtensionDependenciesCount += 1
         invokedAppExtensionDependenciesParameters = (path, name)
@@ -63,9 +64,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedResourceBundleDependenciesCount = 0
     var invokedResourceBundleDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedResourceBundleDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedResourceBundleDependenciesResult: [Target]! = []
+    var stubbedResourceBundleDependenciesResult: Set<Target>! = []
 
-    func resourceBundleDependencies(path: AbsolutePath, name: String) -> [Target] {
+    func resourceBundleDependencies(path: AbsolutePath, name: String) -> Set<Target> {
         invokedResourceBundleDependencies = true
         invokedResourceBundleDependenciesCount += 1
         invokedResourceBundleDependenciesParameters = (path, name)
@@ -77,9 +78,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedTestTargetsDependingOnCount = 0
     var invokedTestTargetsDependingOnParameters: (path: AbsolutePath, name: String)?
     var invokedTestTargetsDependingOnParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedTestTargetsDependingOnResult: [Target]! = []
+    var stubbedTestTargetsDependingOnResult: Set<Target>! = []
 
-    func testTargetsDependingOn(path: AbsolutePath, name: String) -> [Target] {
+    func testTargetsDependingOn(path: AbsolutePath, name: String) -> Set<Target> {
         invokedTestTargetsDependingOn = true
         invokedTestTargetsDependingOnCount += 1
         invokedTestTargetsDependingOnParameters = (path, name)
@@ -91,9 +92,9 @@ final class MockGraphTraverser: GraphTraversing {
     var invokedDirectStaticDependenciesCount = 0
     var invokedDirectStaticDependenciesParameters: (path: AbsolutePath, name: String)?
     var invokedDirectStaticDependenciesParametersList = [(path: AbsolutePath, name: String)]()
-    var stubbedDirectStaticDependenciesResult: [GraphDependencyReference]! = []
+    var stubbedDirectStaticDependenciesResult: Set<GraphDependencyReference>! = []
 
-    func directStaticDependencies(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
+    func directStaticDependencies(path: AbsolutePath, name: String) -> Set<GraphDependencyReference> {
         invokedDirectStaticDependencies = true
         invokedDirectStaticDependenciesCount += 1
         invokedDirectStaticDependenciesParameters = (path, name)
@@ -101,7 +102,18 @@ final class MockGraphTraverser: GraphTraversing {
         return stubbedDirectStaticDependenciesResult
     }
 
-    func appClipsDependency(path _: AbsolutePath, name _: String) -> Target? {
-        nil
+    var invokedAppClipsDependency = false
+    var invokedAppClipsDependencyCount = 0
+    var invokedAppClipsDependencyParameters: (path: AbsolutePath, name: String)?
+    var invokedAppClipsDependencyParametersList = [(path: AbsolutePath, name: String)]()
+    var stubbedAppClipsDependencyResult: Target!
+
+    func appClipsDependency(path: AbsolutePath, name: String) -> Target? {
+        invokedAppClipsDependency = true
+        invokedAppClipsDependencyCount += 1
+        invokedAppClipsDependencyParameters = (path, name)
+        invokedAppClipsDependencyParametersList.append((path, name))
+        return stubbedAppClipsDependencyResult
     }
+    
 }
