@@ -1,0 +1,72 @@
+---
+layout: post
+title: A healthy growth of an Xcode project
+categories:
+  [Tuist, Xcode, Swift, iOS, Apple, scale, software]
+excerpt: Xcode defaults to configuration over convention which often leads to complex project scenarios that worsens the experience of working with projects. In this blog post, we share ten tips to avoid the most common pitfalls to provide a great developer experience.
+author: pepibumur
+---
+
+This is a blog post that I’ve been meaning to write for a while. These days, Xcode projects are no longer mono-target as they used to be. Companies support multiple platforms and offer their apps in different shapes *(i.e. products)* and that results in large Xcode projects. If we don’t pay enough attention, the growth might come with **complexities** of all sorts, which in fact worsens the experience of working with the project and might impact developers’ productivity.
+When teams realize it, it might be too late: several dependency managers, a large list of dependencies, inconsistently failing builds, reproducibility issues, large compilation times. And what’s worse, they usually want to keep up with the latest things coming to the platform (e.g. SwiftUI), and continue building upon a brittle and complex foundation that might collapse any day. Reached that point, some teams opt for disregarding the issue until it becomes unsustainable (I know of well-known apps with 5 network stacks and dependencies), some others prefer to take a desperate move and go to a complete extreme like replacing the entire Xcode’s build system, which in fact brings another set of intricacies.
+I believe a sustainable growth is possible since the inception of the project and it requires a person (or a group of people) paying attention to the areas that I mention below. The hardest part is balancing working on the things that surround the project versus working on the features, but I’ll let you figure that out because that’s more of an organizational discussion to have. Let's dive right in.
+
+## 1. Make Xcode Build Configuration files the source of truth for build settings
+`.pbxproj` files are not the best place for storing build settings. Xcode sets settings automatically when interacting with the project through the UI *(e.g. dragging and dropping a dependency)*, and those changes might go unnoticed when reviewing the PR because GitHub’s UI might hide those and developers don’t review changes on those files. Moreover, it’s not possible to reuse build settings across targets unless they all belong to the same Xcode projects.
+
+For those reasons, it’s better to use [Xcode Build Configuration files](https://nshipster.com/xcconfig/). They are easily diffable when reviewing PRs, less conflict-prone, and allow reusing settings across files. CocoaPods uses them for setting linking settings and you should use them too.
+If your project is heavily using build settings in pbxproj files I recommend you to extract them using this Tuist command designed for that, and add a step to your CI pipeline that ensures that no one in the team adds build settings directly to the project. When project settings changes are detected, you can print an error to indicate developers that they should update the in the `.xcconfig` files instead.
+
+## 2. Leverage project generation to get rid of Git conflicts
+Git conflicts in PRs can be a huge detriment in developers’ productivity. The well-known `.pbxproj` file is a monolith format that is very prone to Git conflicts. As the project grows, so does the likelihood of conflicts because there’ll be more people opening branches and merging them into the main branch repository branch.
+One solution to minimize that is having multiple Xcode projects grouped under a Workspace. However, that doesn’t utterly mitigates the conflicts. If you really want to get rid of them, I recommend using [Tuist](https://tuist.io) to generate your projects.
+
+Unlike existing YAML-based project generators *(e.g. XcodeGen)*, Tuist is designed for convenience and scale and provides features such as project [templates](/docs/usage/helpers/), [caching](/docs/building-at-scale/caching/), and the generation of [focused](/docs/commands/focus/) projects, which we'll talk about later on in this blog post. Moreover, it prevents having to add an indirection layer upon the project generation, like some large companies in the industry are doing. Layers of indirection are hard to debug and maintain and Tuist removes the need for them. **Projects can be defined in a single line of code.**
+
+```swift
+import ProjectDescription
+import ProjectDescriptionHelpers
+
+let project = Project.app(name: "MyApp")
+```
+
+With Tuist's project generation, Xcode projects become an implementation detail necessary for editing your code and compiling your apps. They are generated when needed *(e.g. locally and when building the app on CI)*, and are not part of the repository.
+
+## 3. Ensure a consistent structure across projects
+
+Xcode is weakly opinionated about how developers organized their targets, groups and files, build phases, build settings. Due to that, it's very easy to end up with **inconsistencies** across projects, which might become a source of reproducibility and compilation issues. For instance, two targets that depend one on another might have conflicting build settings that they build system won't know how to resolve. 
+
+The first step towards consistency is making build settings consistent throuth Xcode build configuration files, then project generation in alongside [project description hepers](/docs/usage/helpers/) can be used to codify conventions around the structurue of your projects and targets. For instance, you can define a function that acts as a factory of feature frameworks:
+
+```swift
+// Target+Features.swift
+import ProjectDescription
+
+extension Target {
+  static func featureFramework(name: String) -> Target {
+    // Initialization with the conventions
+  }
+}
+```
+
+## 4. Modularize your codebase
+Modularizing a project is a great idea for several reasons. **First**, it helps define boundaries between domains that prevents the creation of a tangled network of dependencies in code. Swift has [access control](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html) modifiers that are great for this purpose. **Second**, it facilitates the job to the build system because it can do incremental builds at the module level. When modules are distributed horizontally, clean the time of clean builds can decrease significantly. And **last** but not least, you can easily reuse code across products and platforms. Another approach to this would be making files part of more than one target, but that makes Xcode projects unnecessarily more complex, and we end up with duplicities across targets.
+
+Even if it might seem like a premature optimization, we recommend modularizing the project from the very beginning. Otherwise, you'll end up with a large target with strongly coupled code that will be hard to extract into separate targets. From Tuist, we recommend the [**uFeatures Architecture**](/docs/building-at-scale/microfeatures/) that is being used by large companies like [SoundCloud](https://soundcloud.com), and by the Tuist project too.
+
+## 5. Pin the version of the tools and code dependencies your project depends on
+Using different versions of the tools across environments might lead to reproducibility issues. *Have you ever been in a situation where SwiftLint yielded different results on CI compared to locally?* If you use [Homebrew](https://brew.sh) for installing tools in your system you have most likely be there. In dependency managers like CocoaPods or Swift Package Manager, you can achieve that by making the `lockfile` part of the repository. However, Homebrew doesn’t pin dependencies well and leads to those issues.
+
+In the case of Homebrew, which is widely used in the industry, you might consider replacing it with CocoaPods, which some tools are using for distributing themselves, or vendor the tools as part of the repository.
+
+When reproducibility issues arise, developers will have to devote part of their time to figure out where the issue is coming from and fix it. You don’t want your developers to use their time on this, do you?
+
+## 6. Choose and stick to one dependency manager
+[CocoaPods](https://cocoapods.org), [Carthage](https://github.com/carthage), and [Swift Package Manager](https://swift.org/package-manager/) are equally-valid approaches to manage your dependencies. One might be more suitable for your project than others. For instance, you might not want to be compiling dependencies for every clean build. In that case choosing Carthage, or CocoaPods with the plugin [cocoapods-binary](https://github.com/leavez/cocoapods-binary) is a better option over the Swift Package Manager. The Swift Package Manager is nicely integrated into Xcode and its build system, but it can make the launch of your projects slow, and complicate optimizations like using binaries instead of the source code of the dependencies.
+
+*There are no good or bad dependency managers - there are dependency managers that are more or less suitable to your setup.* Don't let the [authority bias](https://en.wikipedia.org/wiki/Authority_bias) influence your decision and introduce the Swift Package Manager because Apple is using it and most of the community is talking about. Be objective, choose one and stick to it. **Having more than one dependency manager makes your project's dependency graph hard to reason about and optimize**
+
+## 7. Minimize the number of third-party dependencies
+## 8. Focused projects
+## 9. Use binaries for targets that are not changed often
+## 10. Resist the trends
