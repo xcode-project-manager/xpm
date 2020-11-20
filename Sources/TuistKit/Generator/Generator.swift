@@ -200,7 +200,7 @@ class Generator: Generating {
     private func postGenerationActions(for graph: Graph, workspaceName: String) throws {
         try signingInteractor.install(graph: graph)
         try swiftPackageManagerInteractor.install(graph: graph, workspaceName: workspaceName)
-        try cocoapodsInteractor.install(graph: graph)
+//        try cocoapodsInteractor.install(graph: graph)
     }
 
     // swiftlint:disable:next large_tuple

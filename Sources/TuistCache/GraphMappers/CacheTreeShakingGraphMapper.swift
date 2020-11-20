@@ -27,6 +27,13 @@ public final class CacheTreeShakingGraphMapper: GraphMapping {
                 return project.with(targets: targets).with(schemes: schemes)
             }
         }
+<<<<<<< Updated upstream
+=======
+
+        let workspace = treeShake(workspace: graph.workspace,
+                                  projects: projects,
+                                  sourceTargets: sourceTargets)
+>>>>>>> Stashed changes
 
         let graph = graph
             .with(projects: projects)
@@ -40,6 +47,18 @@ public final class CacheTreeShakingGraphMapper: GraphMapping {
 
         return (graph, [])
     }
+<<<<<<< Updated upstream
+=======
+
+    fileprivate func treeShake(workspace: Workspace, projects: [Project], sourceTargets: Set<TargetReference>) -> Workspace {
+        let projects = workspace.projects.filter { projects.map(\.path).contains($0) }
+        let schemes = treeShake(schemes: workspace.schemes, sourceTargets: sourceTargets)
+        var workspace = workspace
+        workspace.schemes = schemes
+        workspace.projects = projects
+        return workspace
+    }
+>>>>>>> Stashed changes
 
     fileprivate func treeShake(targets: [Target], path: AbsolutePath, graph: Graph, sourceTargets: Set<TargetReference>) -> [Target] {
         targets.compactMap { (target) -> Target? in

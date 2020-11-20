@@ -6,7 +6,7 @@ public class TargetNode: GraphNode {
     // MARK: - Attributes
 
     public let project: Project
-    public let target: Target
+    public var target: Target
     public var dependencies: [GraphNode]
 
     /// When true it indicates that the target should be stripped from the graph when tree-shaking the project.
