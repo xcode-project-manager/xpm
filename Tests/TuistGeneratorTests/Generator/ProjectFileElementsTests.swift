@@ -9,23 +9,19 @@ import XCTest
 
 final class ProjectFileElementsTests: TuistUnitTestCase {
     var subject: ProjectFileElements!
-    var playgrounds: MockPlaygrounds!
     var groups: ProjectGroups!
     var pbxproj: PBXProj!
 
     override func setUp() {
         super.setUp()
-        playgrounds = MockPlaygrounds()
         pbxproj = PBXProj()
         groups = ProjectGroups.generate(project: .test(path: "/path", sourceRootPath: "/path", xcodeProjPath: "/path/Project.xcodeproj"),
-                                        pbxproj: pbxproj,
-                                        playgrounds: MockPlaygrounds())
+                                        pbxproj: pbxproj)
 
-        subject = ProjectFileElements(playgrounds: playgrounds)
+        subject = ProjectFileElements()
     }
 
     override func tearDown() {
-        playgrounds = nil
         pbxproj = nil
         groups = nil
         subject = nil
@@ -302,7 +298,8 @@ final class ProjectFileElementsTests: TuistUnitTestCase {
                                  headers: Headers(public: [AbsolutePath("/project/public.h")],
                                                   private: [AbsolutePath("/project/private.h")],
                                                   project: [AbsolutePath("/project/project.h")]),
-                                 dependencies: [])
+                                 dependencies: [],
+                                 playgrounds: ["/project/MyPlayground.playground"])
 
         // When
         let files = try subject.targetFiles(target: target)
@@ -312,6 +309,7 @@ final class ProjectFileElementsTests: TuistUnitTestCase {
             GroupFileElement(path: "/project/debug.xcconfig", group: target.filesGroup),
             GroupFileElement(path: "/project/release.xcconfig", group: target.filesGroup),
             GroupFileElement(path: "/project/file.swift", group: target.filesGroup),
+            GroupFileElement(path: "/project/MyPlayground.playground", group: target.filesGroup),
             GroupFileElement(path: "/project/image.png", group: target.filesGroup),
             GroupFileElement(path: "/project/reference", group: target.filesGroup, isReference: true),
             GroupFileElement(path: "/project/public.h", group: target.filesGroup),
@@ -495,6 +493,31 @@ final class ProjectFileElementsTests: TuistUnitTestCase {
         ])
     }
 
+    func test_addPlayground() throws {
+        // Given
+        let from = AbsolutePath("/project/")
+        let fileAbsolutePath = AbsolutePath("/project/MyPlayground.playground")
+        let fileRelativePath = RelativePath("./MyPlayground.playground")
+        let group = PBXGroup()
+        let pbxproj = PBXProj()
+        pbxproj.add(object: group)
+
+        // When
+        subject.addPlayground(from: from,
+                              fileAbsolutePath: fileAbsolutePath,
+                              fileRelativePath: fileRelativePath,
+                              name: nil,
+                              toGroup: group,
+                              pbxproj: pbxproj)
+
+        // Then
+        let file: PBXFileReference? = group.children.first as? PBXFileReference
+        XCTAssertEqual(file?.path, "MyPlayground.playground")
+        XCTAssertEqual(file?.sourceTree, .group)
+        XCTAssertNil(file?.name)
+        XCTAssertEqual(file?.lastKnownFileType, Xcode.filetype(extension: fileAbsolutePath.extension!))
+    }
+
     func test_addVersionGroupElement() throws {
         let from = AbsolutePath("/project/")
         let folderAbsolutePath = AbsolutePath("/project/model.xcdatamodel")
@@ -535,39 +558,6 @@ final class ProjectFileElementsTests: TuistUnitTestCase {
         XCTAssertEqual(file?.lastKnownFileType, Xcode.filetype(extension: "swift"))
     }
 
-    func test_generatePlaygrounds() throws {
-        let pbxproj = PBXProj()
-        let temporaryPath = try self.temporaryPath()
-
-        let playgroundsPath = temporaryPath.appending(component: "Playgrounds")
-        let playgroundPath = playgroundsPath.appending(component: "Test.playground")
-
-        playgrounds.pathsStub = { projectPath in
-            if projectPath == temporaryPath {
-                return [playgroundPath]
-            } else {
-                return []
-            }
-        }
-
-        let project = Project.test(path: temporaryPath,
-                                   sourceRootPath: temporaryPath,
-                                   xcodeProjPath: temporaryPath.appending(component: "Project.xcodeproj"))
-        let groups = ProjectGroups.generate(project: project, pbxproj: pbxproj, playgrounds: playgrounds)
-
-        subject.generatePlaygrounds(path: temporaryPath,
-                                    groups: groups,
-                                    pbxproj: pbxproj,
-                                    sourceRootPath: temporaryPath)
-        let file: PBXFileReference? = groups.playgrounds?.children.first as? PBXFileReference
-
-        XCTAssertEqual(file?.sourceTree, .group)
-        XCTAssertEqual(file?.lastKnownFileType, "file.playground")
-        XCTAssertEqual(file?.path, "Test.playground")
-        XCTAssertNil(file?.name)
-        XCTAssertEqual(file?.xcLanguageSpecificationIdentifier, "xcode.lang.swift")
-    }
-
     func test_group() {
         let group = PBXGroup()
         let path = AbsolutePath("/path/to/folder")
@@ -585,6 +575,11 @@ final class ProjectFileElementsTests: TuistUnitTestCase {
     func test_isLocalized() {
         let path = AbsolutePath("/path/to/es.lproj")
         XCTAssertTrue(subject.isLocalized(path: path))
+    }
+
+    func test_isPlayground() {
+        let path = AbsolutePath("/path/to/MyPlayground.playground")
+        XCTAssertTrue(subject.isPlayground(path: path))
     }
 
     func test_isVersionGroup() {

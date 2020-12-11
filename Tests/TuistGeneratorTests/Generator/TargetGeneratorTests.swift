@@ -19,7 +19,7 @@ final class TargetGeneratorTests: XCTestCase {
         path = AbsolutePath("/test")
         pbxproj = PBXProj()
         pbxProject = createPbxProject(pbxproj: pbxproj)
-        fileElements = ProjectFileElements([:], playgrounds: MockPlaygrounds())
+        fileElements = ProjectFileElements([:])
 
         subject = TargetGenerator()
     }
@@ -57,8 +57,7 @@ final class TargetGeneratorTests: XCTestCase {
                                    targets: [target])
         let graph = Graph.test()
         let groups = ProjectGroups.generate(project: project,
-                                            pbxproj: pbxproj,
-                                            playgrounds: MockPlaygrounds())
+                                            pbxproj: pbxproj)
         try fileElements.generateProjectFiles(project: project,
                                               graph: graph,
                                               groups: groups,
@@ -132,8 +131,7 @@ final class TargetGeneratorTests: XCTestCase {
                                  ])
         let project = Project.test(path: path, sourceRootPath: path, xcodeProjPath: path.appending(component: "Project.xcodeproj"), targets: [target])
         let groups = ProjectGroups.generate(project: project,
-                                            pbxproj: pbxproj,
-                                            playgrounds: MockPlaygrounds())
+                                            pbxproj: pbxproj)
         try fileElements.generateProjectFiles(project: project,
                                               graph: graph,
                                               groups: groups,

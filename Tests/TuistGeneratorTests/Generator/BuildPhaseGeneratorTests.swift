@@ -597,7 +597,7 @@ final class BuildPhaseGeneratorTests: TuistUnitTestCase {
     func test_generateTarget_actions() throws {
         // Given
         system.swiftVersionStub = { "5.2" }
-        let fileElements = ProjectFileElements([:], playgrounds: MockPlaygrounds())
+        let fileElements = ProjectFileElements([:])
         let graph = Graph.test()
         let path = AbsolutePath("/test")
         let pbxproj = PBXProj()
@@ -610,8 +610,7 @@ final class BuildPhaseGeneratorTests: TuistUnitTestCase {
                                  ])
         let project = Project.test(path: path, sourceRootPath: path, xcodeProjPath: path.appending(component: "Project.xcodeproj"), targets: [target])
         let groups = ProjectGroups.generate(project: project,
-                                            pbxproj: pbxproj,
-                                            playgrounds: MockPlaygrounds())
+                                            pbxproj: pbxproj)
         try fileElements.generateProjectFiles(project: project,
                                               graph: graph,
                                               groups: groups,
