@@ -43,6 +43,9 @@ public final class CacheFrameworkBuilder: CacheArtifactBuilding {
     /// Developer's environment.
     private let developerEnvironment: DeveloperEnvironmenting
 
+    /// Build locator to find the products directory for the current project/workspace in derived data
+    private let buildLocator: XcodeBuildLocating
+
     /// a map between the path of a project or workspace, and the path to derived data
     /// using the hash calculated by Xcode.
     private var projectPathHashes: [String: AbsolutePath] = [:]
@@ -56,11 +59,14 @@ public final class CacheFrameworkBuilder: CacheArtifactBuilding {
     ///   - developerEnvironment: Developer environment.
     public init(xcodeBuildController: XcodeBuildControlling,
                 simulatorController: SimulatorControlling = SimulatorController(),
-                developerEnvironment: DeveloperEnvironmenting = DeveloperEnvironment.shared)
+                developerEnvironment: DeveloperEnvironmenting = DeveloperEnvironment.shared,
+                buildLocator: XcodeBuildLocating
+                )
     {
         self.xcodeBuildController = xcodeBuildController
         self.simulatorController = simulatorController
         self.developerEnvironment = developerEnvironment
+        self.buildLocator = buildLocator
     }
 
     // MARK: - ArtifactBuilding
@@ -114,7 +120,6 @@ public final class CacheFrameworkBuilder: CacheArtifactBuilding {
         )
 
         let buildDirectory = try self.buildDirectory(for: projectTarget,
-                                                     target: target,
                                                      configuration: configuration,
                                                      sdk: sdk)
 
@@ -124,7 +129,6 @@ public final class CacheFrameworkBuilder: CacheArtifactBuilding {
     }
 
     fileprivate func buildDirectory(for projectTarget: XcodeBuildTarget,
-                                    target _: Target,
                                     configuration: String,
                                     sdk: String) throws -> AbsolutePath
     {
@@ -135,13 +139,7 @@ public final class CacheFrameworkBuilder: CacheArtifactBuilding {
             return existing
         }
 
-        let derivedDataPath = developerEnvironment.derivedDataDirectory
-        let hash = try XcodeProjectPathHasher.hashString(for: pathString)
-        let buildDirectory = derivedDataPath
-            .appending(component: "\(projectTarget.path.basenameWithoutExt)-\(hash)")
-            .appending(component: "Build")
-            .appending(component: "Products")
-            .appending(component: "\(configuration)-\(sdk)")
+        let buildDirectory = try buildLocator.buildDirectory(for: projectTarget, configuration: configuration, sdk: sdk, developerEnvironment: developerEnvironment)
         projectPathHashes[pathString] = buildDirectory
 
         return buildDirectory

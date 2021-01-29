@@ -42,13 +42,22 @@ final class BuildService {
     /// Build graph inspector.
     let buildGraphInspector: BuildGraphInspecting
 
+    /// Developer's environment.
+    let developerEnvironment: DeveloperEnvironmenting
+
+    /// Build locator to find the products directory for the current project/workspace in derived data
+    let buildLocator: XcodeBuildLocating
+
     init(generator: Generating = Generator(contentHasher: CacheContentHasher()),
          xcodebuildController: XcodeBuildControlling = XcodeBuildController(),
-         buildGraphInspector: BuildGraphInspecting = BuildGraphInspector())
+         buildGraphInspector: BuildGraphInspecting = BuildGraphInspector(),
+         developerEnvironment: DeveloperEnvironmenting = DeveloperEnvironment.shared,
+         buildLocator: XcodeBuildLocating = XcodeBuildLocator())
     {
         self.generator = generator
         self.xcodebuildController = xcodebuildController
         self.buildGraphInspector = buildGraphInspector
+        self.buildLocator = buildLocator
     }
 
     func run(
@@ -56,7 +65,8 @@ final class BuildService {
         generate: Bool,
         clean: Bool,
         configuration: String?,
-        path: AbsolutePath
+        path: AbsolutePath,
+        outputPath: AbsolutePath?
     ) throws {
         let graph: Graph
         if try (generate || buildGraphInspector.workspacePath(directory: path) == nil) {
@@ -84,23 +94,35 @@ final class BuildService {
             }
         }
 
-        logger.log(level: .notice, "The project built successfully", metadata: .success)
+        let message: Logger.Message
+
+        if let output = outputPath {
+            message = "The project was built successfully at \(output.pathString)"
+        } else {
+            message = "The project was built successfully"
+        }
+
+        logger.log(level: .notice, message, metadata: .success)
     }
 
     // MARK: - private
 
-    private func buildScheme(scheme: Scheme, graph: Graph, path: AbsolutePath, clean: Bool, configuration: String?) throws {
+    private func buildScheme(scheme: Scheme, graph: Graph, path: AbsolutePath, clean: Bool, configuration: String?, outputPath: String?) throws {
         logger.log(level: .notice, "Building scheme \(scheme.name)", metadata: .section)
         guard let buildableTarget = buildGraphInspector.buildableTarget(scheme: scheme, graph: graph) else {
             throw BuildServiceError.schemeWithoutBuildableTargets(scheme: scheme.name)
         }
         let workspacePath = try buildGraphInspector.workspacePath(directory: path)!
+        let buildArguments = buildGraphInspector.buildArguments(target: buildableTarget, configuration: configuration, skipSigning: false)
+
         _ = try xcodebuildController.build(.workspace(workspacePath),
                                            scheme: scheme.name,
                                            clean: clean,
-                                           arguments: buildGraphInspector.buildArguments(target: buildableTarget, configuration: configuration, skipSigning: false))
+                                           arguments: buildArguments)
             .printFormattedOutput()
             .toBlocking()
             .last()
+
+        //TODO: Perform the copy to outputPath if not nil
     }
 }

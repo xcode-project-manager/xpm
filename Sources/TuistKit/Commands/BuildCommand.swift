@@ -38,6 +38,12 @@ struct BuildCommand: ParsableCommand {
     )
     var configuration: String?
 
+    @Option(
+        name: .shortAndLong,
+        help: "The configuration to be used when building the scheme."
+    )
+    var outputhPath: String?
+
     func run() throws {
         let absolutePath: AbsolutePath
         if let path = path {
@@ -45,12 +51,16 @@ struct BuildCommand: ParsableCommand {
         } else {
             absolutePath = FileHandler.shared.currentPath
         }
+
+        let output = outputhPath.map { AbsolutePath($0, relativeTo: FileHandler.shared.currentPath) }
+
         try BuildService().run(
             schemeName: scheme,
             generate: generate,
             clean: clean,
             configuration: configuration,
-            path: absolutePath
+            path: absolutePath,
+            outputPath: output
         )
     }
 }

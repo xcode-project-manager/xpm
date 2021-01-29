@@ -286,14 +286,16 @@ private extension BuildService {
         generate: Bool = false,
         clean: Bool = true,
         configuration: String? = nil,
-        path: AbsolutePath
+        path: AbsolutePath,
+        outputPath: AbsolutePath? = nil
     ) throws {
         try run(
             schemeName: schemeName,
             generate: generate,
             clean: clean,
             configuration: configuration,
-            path: path
+            path: path,
+            outputPath: outputPath
         )
     }
 }

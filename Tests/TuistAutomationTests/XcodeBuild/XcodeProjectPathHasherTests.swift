@@ -1,5 +1,5 @@
 import XCTest
-@testable import TuistCache
+@testable import TuistAutomation
 @testable import TuistSupportTesting
 
 final class XcodeProjectPathHasherTests: TuistUnitTestCase {
