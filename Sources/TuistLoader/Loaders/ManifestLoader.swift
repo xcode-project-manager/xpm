@@ -95,6 +95,10 @@ public protocol ManifestLoading {
     /// List all the manifests in the given directory.
     /// - Parameter path: Path to the directory whose manifest files will be returend.
     func manifests(at path: AbsolutePath) -> Set<Manifest>
+
+    /// Registers plugins that will be used within the manifest loading process.
+    /// - Parameter plugins: The plugins to register.
+    func register(plugins: Plugins)
 }
 
 public class ManifestLoader: ManifestLoading {
@@ -110,6 +114,7 @@ public class ManifestLoader: ManifestLoading {
     let manifestFilesLocator: ManifestFilesLocating
     let environment: Environmenting
     private let decoder: JSONDecoder
+    private var projectDescriptionHelpersPlugins: [ProjectDescriptionHelpersPlugin] = []
 
     // MARK: - Init
 
@@ -182,14 +187,16 @@ public class ManifestLoader: ManifestLoading {
         try loadManifest(.plugin, at: path)
     }
 
+    public func register(plugins: Plugins) {
+        projectDescriptionHelpersPlugins.append(contentsOf: plugins.projectDescriptionHelpers)
+    }
+
     // MARK: - Private
 
     private func loadManifest<T: Decodable>(
         _ manifest: Manifest,
         at path: AbsolutePath
-//        plugins: Plugins
     ) throws -> T {
-        let plugins = Plugins(projectDescriptionHelpers: [])
         var fileNames = [manifest.fileName(path)]
         if let deprecatedFileName = manifest.deprecatedFileName {
             fileNames.insert(deprecatedFileName, at: 0)
@@ -198,7 +205,7 @@ public class ManifestLoader: ManifestLoading {
         for fileName in fileNames {
             let manifestPath = path.appending(component: fileName)
             if !FileHandler.shared.exists(manifestPath) { continue }
-            let data = try loadDataForManifest(manifest, at: manifestPath, plugins: plugins)
+            let data = try loadDataForManifest(manifest, at: manifestPath)
             if Environment.shared.isVerbose {
                 let string = String(data: data, encoding: .utf8)
                 logger.debug("Trying to load the manifest represented by the following JSON representation:\n\(string ?? "")")
@@ -211,8 +218,7 @@ public class ManifestLoader: ManifestLoading {
 
     private func loadDataForManifest(
         _ manifest: Manifest,
-        at path: AbsolutePath,
-        plugins: Plugins = .none
+        at path: AbsolutePath
     ) throws -> Data {
         let projectDescriptionPath = try resourceLocator.projectDescription()
         let searchPaths = ProjectDescriptionSearchPaths.paths(for: projectDescriptionPath)
@@ -231,7 +237,7 @@ public class ManifestLoader: ManifestLoading {
         let projectDescriptionHelperArguments = try projectDescriptionHelpersBuilder.build(
             at: path,
             projectDescriptionSearchPaths: searchPaths,
-            projectDescriptionHelperPlugins: plugins.projectDescriptionHelpers
+            projectDescriptionHelperPlugins: projectDescriptionHelpersPlugins
         ).flatMap { [
             "-I", $0.path.parentDirectory.pathString,
             "-L", $0.path.parentDirectory.pathString,
@@ -265,21 +271,21 @@ public class ManifestLoader: ManifestLoading {
             let manifest = string[startTokenRange.upperBound ..< endTokenRange.lowerBound]
             return manifest.data(using: .utf8)!
         case let .failed(_, error):
-            handleUnexpectedImportError(in: path, error: error, manifest: manifest, plugins: plugins)
+            handleUnexpectedImportError(in: path, error: error, manifest: manifest)
             throw error
         }
     }
 
     /// Logs a help message to the user if attempting to import modules that
     /// are disallowed from certain manifests.
-    private func handleUnexpectedImportError(in path: AbsolutePath, error: Error, manifest: Manifest, plugins: Plugins) {
+    private func handleUnexpectedImportError(in path: AbsolutePath, error: Error, manifest: Manifest) {
         guard case let TuistSupport.SystemError.terminated(command, _, standardError) = error,
             manifest == .config || manifest == .plugin,
             command == "swiftc",
             let errorMessage = String(data: standardError, encoding: .utf8) else { return }
 
         let defaultHelpersName = ProjectDescriptionHelpersBuilder.defaultHelpersName
-        let helperModules = [defaultHelpersName] + plugins.projectDescriptionHelpers.map(\.name)
+        let helperModules = [defaultHelpersName] + projectDescriptionHelpersPlugins.map(\.name)
         let hasImportedUnexpectedModule = helperModules.reduce(false) { $0 || errorMessage.contains($1) }
         guard hasImportedUnexpectedModule else { return }
 

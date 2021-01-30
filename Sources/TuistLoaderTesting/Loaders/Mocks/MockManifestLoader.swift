@@ -1,6 +1,7 @@
 import Foundation
 import ProjectDescription
 import TSCBasic
+import struct TuistGraph.Plugins
 import TuistSupport
 @testable import TuistLoader
 @testable import TuistSupportTesting
@@ -77,4 +78,6 @@ public final class MockManifestLoader: ManifestLoading {
         loadPluginCount += 1
         return try loadPluginStub?(path) ?? .test()
     }
+
+    public func register(plugins _: Plugins) {}
 }

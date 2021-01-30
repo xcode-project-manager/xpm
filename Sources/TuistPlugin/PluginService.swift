@@ -41,7 +41,7 @@ public final class PluginService: PluginServicing {
             return .none
         }
 
-        let config =  try configLoader.loadConfig(at: configPath)
+        let config = try configLoader.loadConfig(at: configPath)
         return try loadPlugins(using: config)
     }
 

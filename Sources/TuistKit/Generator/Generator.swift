@@ -4,6 +4,7 @@ import TuistCore
 import TuistGenerator
 import TuistGraph
 import TuistLoader
+import TuistPlugin
 import TuistSigning
 import TuistSupport
 
@@ -34,6 +35,7 @@ class Generator: Generating {
     private let projectMapperProvider: ProjectMapperProviding
     private let workspaceMapperProvider: WorkspaceMapperProviding
     private let manifestLoader: ManifestLoading
+    private let pluginsService: PluginServicing
 
     convenience init(contentHasher: ContentHashing) {
         self.init(projectMapperProvider: ProjectMapperProvider(contentHasher: contentHasher),
@@ -59,6 +61,10 @@ class Generator: Generating {
         self.projectMapperProvider = projectMapperProvider
         self.workspaceMapperProvider = workspaceMapperProvider
         self.manifestLoader = manifestLoader
+        pluginsService = PluginService(
+            manifestLoader: manifestLoader,
+            configLoader: modelLoader
+        )
     }
 
     func generate(path: AbsolutePath, projectOnly: Bool) throws -> AbsolutePath {
@@ -94,6 +100,10 @@ class Generator: Generating {
 
     // swiftlint:disable:next large_tuple
     func loadProject(path: AbsolutePath) throws -> (Project, Graph, [SideEffectDescriptor]) {
+        // Load Plugins
+        let plugins = try pluginsService.loadPlugins(at: path)
+        manifestLoader.register(plugins: plugins)
+
         // Load all manifests
         let manifests = try recursiveManifestLoader.loadProject(at: path)
 
@@ -212,6 +222,10 @@ class Generator: Generating {
 
     // swiftlint:disable:next large_tuple
     private func loadProjectWorkspace(path: AbsolutePath) throws -> (Project, Graph, [SideEffectDescriptor]) {
+        // Load Plugins
+        let plugins = try pluginsService.loadPlugins(at: path)
+        manifestLoader.register(plugins: plugins)
+
         // Load all manifests
         let manifests = try recursiveManifestLoader.loadProject(at: path)
 
@@ -256,6 +270,10 @@ class Generator: Generating {
 
     // swiftlint:disable:next large_tuple
     private func loadWorkspace(path: AbsolutePath) throws -> (Graph, [SideEffectDescriptor]) {
+        // Load Plugins
+        let plugins = try pluginsService.loadPlugins(at: path)
+        manifestLoader.register(plugins: plugins)
+
         // Load all manifests
         let manifests = try recursiveManifestLoader.loadWorkspace(at: path)
 
