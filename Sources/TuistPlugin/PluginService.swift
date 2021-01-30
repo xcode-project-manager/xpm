@@ -33,7 +33,8 @@ public final class PluginService: PluginServicing {
 
     public func loadPlugins(at path: AbsolutePath) throws -> Plugins {
         guard let configPath = manifestFilesLocator.locateConfig(at: path) else {
-            throw PluginServiceError.configNotFound(path)
+            logger.debug("Skipping loading plugins at: \(path), no Config manifest found.")
+            return .none
         }
 
         let config = try modelLoader.loadConfig(at: configPath)
@@ -60,8 +61,7 @@ public final class PluginService: PluginServicing {
                 case let .local(path):
                     logger.debug("Fetching \(plugin.description) at: \(path)")
                     return AbsolutePath(path)
-                case let .gitWithBranch(url, id),
-                     let .gitWithTag(url, id),
+                case let .gitWithTag(url, id),
                      let .gitWithSha(url, id):
                     logger.debug("Fetching \(plugin.description) at: \(url) @ \(id)")
                     return try fetchGitPlugin(at: url, with: id)

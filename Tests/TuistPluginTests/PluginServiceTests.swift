@@ -80,12 +80,12 @@ final class PluginServiceTests: TuistTestCase {
 
     func test_loadPlugin_atPath_WHEN_gitHelpers() throws {
         let pluginGitUrl = "https://url/to/repo.git"
-        let pluginGitId = "main"
+        let pluginGitId = "1.0.0"
         let pluginFingerprint = "\(pluginGitUrl)-\(pluginGitId)".md5
         let cachedPluginPath = environment.cacheDirectory.appending(components: Constants.PluginDirectory.name, pluginFingerprint)
 
         mockModelLoader.mockConfig("Config.swift") { _ in
-            self.mockConfig(plugins: [.gitWithBranch(url: pluginGitUrl, branch: pluginGitId)])
+            self.mockConfig(plugins: [.gitWithTag(url: pluginGitUrl, tag: pluginGitId)])
         }
         mockModelLoader.mockPlugin(cachedPluginPath.pathString) { _ in
             Plugin(name: "MockPlugin")
@@ -104,10 +104,10 @@ final class PluginServiceTests: TuistTestCase {
 
     func test_loadPlugin_usingConfig_WHEN_gitHelpers() throws {
         let pluginGitUrl = "https://url/to/repo.git"
-        let pluginGitId = "main"
+        let pluginGitId = "1.0.0"
         let pluginFingerprint = "\(pluginGitUrl)-\(pluginGitId)".md5
         let cachedPluginPath = environment.cacheDirectory.appending(components: Constants.PluginDirectory.name, pluginFingerprint)
-        let config = mockConfig(plugins: [.gitWithBranch(url: pluginGitUrl, branch: pluginGitId)])
+        let config = mockConfig(plugins: [.gitWithTag(url: pluginGitUrl, tag: pluginGitId)])
 
         mockModelLoader.mockPlugin(cachedPluginPath.pathString) { _ in
             Plugin(name: "MockPlugin")

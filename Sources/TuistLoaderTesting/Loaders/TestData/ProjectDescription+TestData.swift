@@ -165,3 +165,9 @@ extension Dependencies {
         Dependencies(dependencies)
     }
 }
+
+extension Plugin {
+    public static func test(name: String = "Plugin") -> Plugin {
+        Plugin(name: name)
+    }
+}
