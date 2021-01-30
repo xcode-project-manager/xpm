@@ -45,7 +45,9 @@ extension GeneratorModelLoader: GeneratorModelLoading {
         let manifest = try manifestLoader.loadWorkspace(at: path)
         return try convert(manifest: manifest, path: path)
     }
+}
 
+extension GeneratorModelLoader: ConfigLoading {
     public func loadConfig(at path: AbsolutePath) throws -> TuistGraph.Config {
         // If the Config.swift file exists in the root Tuist/ directory, we load it from there
         if let rootDirectoryPath = rootDirectoryLocator.locate(from: path) {
@@ -71,10 +73,6 @@ extension GeneratorModelLoader: GeneratorModelLoading {
         }
 
         return TuistGraph.Config.default
-    }
-
-    public func loadPlugin(at _: AbsolutePath) throws -> TuistGraph.Plugin {
-        Plugin(name: "TODO")
     }
 }
 

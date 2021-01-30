@@ -85,6 +85,10 @@ public class CachedManifestLoader: ManifestLoading {
         manifestLoader.manifests(at: path)
     }
 
+    public func loadPlugin(at path: AbsolutePath) throws -> Plugin {
+        try manifestLoader.loadPlugin(at: path)
+    }
+
     // MARK: - Private
 
     private func load<T: Codable>(manifest: Manifest, at path: AbsolutePath, loader: () throws -> T) throws -> T {

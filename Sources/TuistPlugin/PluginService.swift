@@ -8,24 +8,28 @@ import TuistSupport
 /// the `Config` description without it needing to be loaded. The  plugins are first fetched/copied into
 /// a cache and the loaded `Plugins` model is returned.
 public final class PluginService: PluginServicing {
-    private let modelLoader: GeneratorModelLoading
+    private let manifestLoader: ManifestLoading
+    private let configLoader: ConfigLoading
     private let fileHandler: FileHandling
     private let gitHandler: GitHandling
     private let manifestFilesLocator: ManifestFilesLocating
 
     /// Creates a `PluginService`.
     /// - Parameters:
-    ///   - modelLoader: A model loader for loading plugins.
+    ///   - manifestLoader: A manifest loader for loading plugins.
+    ///   - configLoader: A configuration loader
     ///   - fileHandler: A file handler for creating plugin directories/related files.
     ///   - gitHandler: A git handler for cloning and interacting with remote plugins.
     ///   - manifestFilesLocator: A locator for manifest files, used to find location of `Config` manifest in order to load plugins.
     public init(
-        modelLoader: GeneratorModelLoading = GeneratorModelLoader(manifestLoader: ManifestLoader(), manifestLinter: ManifestLinter()),
+        manifestLoader: ManifestLoading = ManifestLoader(),
+        configLoader: ConfigLoading = GeneratorModelLoader(manifestLoader: ManifestLoader(), manifestLinter: ManifestLinter()),
         fileHandler: FileHandling = FileHandler.shared,
         gitHandler: GitHandling = GitHandler(),
         manifestFilesLocator: ManifestFilesLocating = ManifestFilesLocator()
     ) {
-        self.modelLoader = modelLoader
+        self.manifestLoader = manifestLoader
+        self.configLoader = configLoader
         self.fileHandler = fileHandler
         self.gitHandler = gitHandler
         self.manifestFilesLocator = manifestFilesLocator
@@ -37,13 +41,13 @@ public final class PluginService: PluginServicing {
             return .none
         }
 
-        let config = try modelLoader.loadConfig(at: configPath)
+        let config =  try configLoader.loadConfig(at: configPath)
         return try loadPlugins(using: config)
     }
 
     public func loadPlugins(using config: Config) throws -> Plugins {
         let pluginPaths = try fetchPlugins(config: config)
-        let pluginManifests = try pluginPaths.map(modelLoader.loadPlugin)
+        let pluginManifests = try pluginPaths.map(manifestLoader.loadPlugin)
         let projectDescriptionHelpers = zip(pluginManifests, pluginPaths)
             .compactMap { plugin, path -> ProjectDescriptionHelpersPlugin? in
                 let helpersPath = path.appending(RelativePath(Constants.helpersDirectoryName))

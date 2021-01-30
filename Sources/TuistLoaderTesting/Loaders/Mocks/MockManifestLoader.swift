@@ -30,6 +30,9 @@ public final class MockManifestLoader: ManifestLoading {
     public var loadDependenciesCount: UInt = 0
     public var loadDependenciesStub: ((AbsolutePath) throws -> ProjectDescription.Dependencies)?
 
+    public var loadPluginCount: UInt = 0
+    public var loadPluginStub: ((AbsolutePath) throws -> ProjectDescription.Plugin)?
+
     public init() {}
 
     public func loadProject(at path: AbsolutePath) throws -> ProjectDescription.Project {
@@ -68,5 +71,10 @@ public final class MockManifestLoader: ManifestLoading {
     public func loadDependencies(at path: AbsolutePath) throws -> Dependencies {
         loadDependenciesCount += 1
         return try loadDependenciesStub?(path) ?? ProjectDescription.Dependencies.test()
+    }
+
+    public func loadPlugin(at path: AbsolutePath) throws -> Plugin {
+        loadPluginCount += 1
+        return try loadPluginStub?(path) ?? .test()
     }
 }
