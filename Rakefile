@@ -2,7 +2,9 @@
 
 SWIFTDOC_VERSION = "1.0.0-beta.5"
 SWIFTLINT_VERSION = "0.40.2"
+XCBEAUTIFY_VERSION = "0.8.1"
 
+require 'rake/testtask'
 require 'rubygems'
 require 'cucumber'
 require 'cucumber/rake/task'
@@ -17,8 +19,14 @@ require 'json'
 require 'zip'
 require 'macho'
 
-Cucumber::Rake::Task.new(:features) do |t|
-  t.cucumber_opts = "--format pretty"
+desc("Runs the Fourier tests")
+Rake::TestTask.new do |t|
+  t.name = "test_fourier"
+  t.libs += [File.expand_path('./tools/fourier/test', __dir__)]
+  test_root = File.expand_path('./tools/fourier/test', __dir__)
+  t.test_files = FileList[File.join(test_root, '**', '*_test.rb')]
+  t.verbose = false
+  t.warning = false
 end
 
 desc("Updates swift-doc binary with the latest version available.")
@@ -73,10 +81,41 @@ task :swift_lint_update do
   File.write(File.join(root_dir, "vendor/.swiftlint.version"), SWIFTLINT_VERSION)
 end
 
+desc("Install git hooks")
+task :install_git_hooks do
+  system("cp hooks/pre-commit .git/hooks/pre-commit")
+  system("chmod u+x .git/hooks/pre-commit")
+  puts("pre-commit hook installed on .git/hooks/")
+end
+
+desc("Updates xcbeautify binary with the latest version available.")
+task :xcbeautify_update do
+  root_dir = File.expand_path(__dir__)
+  Dir.mktmpdir do |temporary_dir|
+    Dir.chdir(temporary_dir) do
+      system("curl", "-LO", "https://github.com/thii/xcbeautify/archive/#{XCBEAUTIFY_VERSION}.zip")
+      extract_zip("#{XCBEAUTIFY_VERSION}.zip", "xcbeautify")
+      Dir.chdir("xcbeautify/xcbeautify-#{XCBEAUTIFY_VERSION}") do
+        system("make", "build")
+      end
+      release_dir = File.join(temporary_dir,
+"xcbeautify/xcbeautify-#{XCBEAUTIFY_VERSION}/.build/release")
+      vendor_dir = File.join(root_dir, "vendor")
+      dst_binary_path = File.join(vendor_dir, "xcbeautify")
+
+      # Copy binary
+      binary_path = File.join(release_dir, "xcbeautify")
+      File.delete(dst_binary_path) if File.exist?(dst_binary_path)
+      FileUtils.cp(binary_path, dst_binary_path)
+    end
+  end
+  # Write version
+  File.write(File.join(root_dir, "vendor/.xcbeautify.version"), XCBEAUTIFY_VERSION)
+end
+
 desc("Formats the code style")
 task :style_correct do
-  system(swiftlint_path, "autocorrect")
-  system(swiftformat_path, ".")
+  system(code_style_path)
 end
 
 desc("Swift format check")
@@ -114,24 +153,6 @@ desc("Publishes the installation scripts")
 task :release_scripts do
   decrypt_secrets
   release_scripts
-end
-
-desc("Packages tuist, tags it with the commit sha and uploads it to gcs")
-task :package_commit do
-  decrypt_secrets
-  package
-
-  bucket = storage.bucket("tuist-builds")
-
-  sha = %x(git rev-parse HEAD).strip.chomp
-  print_section("Uploading tuist-#{sha}")
-  file = bucket.create_file(
-    "build/tuist.zip",
-    "#{sha}.zip"
-  )
-
-  file.acl.public!
-  print_section("Uploaded 🚀")
 end
 
 desc("Encrypt secret keys")
@@ -218,6 +239,10 @@ end
 
 def swiftlint_path
   File.expand_path("bin/swiftlint", __dir__)
+end
+
+def code_style_path
+  File.expand_path("script/code_style.sh", __dir__)
 end
 
 def decrypt_secrets

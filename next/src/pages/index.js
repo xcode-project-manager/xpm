@@ -1,149 +1,136 @@
 import * as React from 'react'
+import MainLayout from '../layouts/MainLayout'
+import tw from 'twin.macro'
+import featureManifestImage from './images/feature-manifest.svg'
+import featureHelpersImage from './images/feature-helpers.svg'
+import featureScaffoldImage from './images/feature-scaffold.svg'
+import communityGitHubImage from './images/community-github.svg'
+import communitySlackImage from './images/community-slack.svg'
+import companiesImage from './images/companies.svg'
 
-// styles
-const pageStyles = {
-  color: '#232129',
-  padding: '96px',
-  fontFamily: '-apple-system, Roboto, sans-serif, serif',
-}
-const headingStyles = {
-  marginTop: 0,
-  marginBottom: 64,
-  maxWidth: 320,
-}
-const headingAccentStyles = {
-  color: '#663399',
-}
-const paragraphStyles = {
-  marginBottom: 48,
-}
-const codeStyles = {
-  color: '#8A6534',
-  padding: 4,
-  backgroundColor: '#FFF4DB',
-  fontSize: '1.25rem',
-  borderRadius: 4,
-}
-const listStyles = {
-  marginBottom: 96,
-  paddingLeft: 0,
-}
-const listItemStyles = {
-  fontWeight: '300',
-  fontSize: '24px',
-  maxWidth: '560px',
+const Features = () => {
+  const featureCSS = [tw`space-y-4`]
+  const featureTermCSS = [
+    tw`text-white text-center font-tuist-mono text-lg md:text-xl md:text-left`,
+  ]
+  const featureDefinitionCSS = [
+    tw`font-tuist text-gray-600 text-lg text-center md:text-left md:text-xl`,
+  ]
+  const featureImageCSS = [tw`mx-auto`]
+
+  return (
+    <section css={[tw`bg-primary-dark px-10 py-10 md:py-20`]}>
+      <div css={[tw`mx-auto w-full md:max-w-5xl`]}>
+        <div css={[tw`space-y-10`]}>
+          <h3
+            css={[
+              tw`text-white font-bold text-2xl text-center md:text-left md:font-extrabold md:text-3xl font-tuist`,
+            ]}
+          >
+            Feature highlights
+          </h3>
+          <dl
+            css={[
+              tw`grid gap-4 justify-items-center grid-rows-3 grid-cols-1 md:grid-rows-1 md:grid-cols-3`,
+            ]}
+          >
+            <div css={featureCSS}>
+              <img src={featureManifestImage} css={featureImageCSS} />
+              <dt css={featureTermCSS}>Swift Manifest</dt>
+              <dd css={featureDefinitionCSS}>
+                Define projects using a simple Swift DSL inside Xcode
+              </dd>
+            </div>
+            <div css={featureCSS}>
+              <img src={featureHelpersImage} css={featureImageCSS} />
+              <dt css={featureTermCSS}>Project description helpers</dt>
+              <dd css={featureDefinitionCSS}>
+                Create abstractions to define your projects consistently
+              </dd>
+            </div>
+            <div css={featureCSS}>
+              <img src={featureScaffoldImage} css={featureImageCSS} />
+              <dt css={featureTermCSS}>Scaffold</dt>
+              <dd css={featureDefinitionCSS}>
+                Automate feature creation by generating a target pre-configured
+                with everything you need
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  )
 }
 
-const linkStyle = {
-  color: '#8954A8',
-  fontWeight: 'bold',
-  fontSize: '16px',
-  verticalAlign: '5%',
+const Companies = () => {
+  return (
+    <section css={tw`px-10 py-10 md:py-20 relative`}>
+      <div css={tw`mx-auto w-full md:max-w-5xl relative`}>
+        <div css={[tw`static z-0 grid grid-cols-2 grid-rows-1`]}>
+          <h2 css={tw`text-primary font-extrabold text-5xl font-tuist`}>
+            {`You'll be in great company`}
+          </h2>
+          <figure
+            css={tw`bg-primary text-white rounded-lg p-8 font-tuist space-y-5`}
+          >
+            <blockquote css={tw`text-2xl`}>
+              Everyone in my team can create their own frameworks in a few
+              seconds which is amazing and really helps to speed up things and
+              work efficiently!
+            </blockquote>
+            <figcaption css={tw`text-xl text-purple-100 text-right`}>
+              iOS lead @ Bloomberg
+            </figcaption>
+          </figure>
+        </div>
+        <div css={[tw`absolute z-10 w-full grid grid-cols-8 grid-rows-6`]}>
+          <img
+            css={tw`col-start-1 col-end-5 row-start-2 row-end-6 object-contain bg-green-200`}
+            src={companiesImage}
+          />
+        </div>
+      </div>
+    </section>
+  )
 }
 
-const docLinkStyle = {
-  ...linkStyle,
-  listStyleType: 'none',
-  marginBottom: 24,
+const Community = () => {
+  const textCSS = tw`text-xl text-center font-tuist md:text-2xl md:text-left`
+  const highlightCSS = tw`bg-purple-200 font-bold p-1`
+  const sectionCSS = tw`space-y-10`
+  return (
+    <section css={tw`px-10 py-10 md:py-20`}>
+      <div
+        css={tw`mx-auto w-full md:max-w-5xl grid justify-items-center gap-4 grid-cols-1 grid-rows-2 md:gap-10 md:grid-cols-2 md:grid-rows-1`}
+      >
+        <div css={sectionCSS}>
+          <div css={textCSS}>
+            Benefit from extensive documentation and our{' '}
+            <span css={highlightCSS}>Slack community</span> for support to scale
+            Xcode projects at any stage
+          </div>
+          <img css={tw`mx-auto`} src={communitySlackImage} />
+        </div>
+        <div css={sectionCSS}>
+          <img css={tw`mx-auto`} src={communityGitHubImage} />
+          <div css={textCSS}>
+            <span css={highlightCSS}>Join contributors</span> from all over the
+            world to shape the next versions of Tuist. From small contributions
+            to important features, mentors will help you go get started.
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
-
-const descriptionStyle = {
-  color: '#232129',
-  fontSize: '14px',
-}
-
-const docLink = {
-  text: 'Documentation',
-  url: 'https://www.gatsbyjs.com/docs/',
-  color: '#8954A8',
-}
-// data
-const links = [
-  {
-    text: 'Tutorial',
-    url: 'https://www.gatsbyjs.com/docs/tutorial/',
-    description:
-      "A great place to get started if you're new to web development. Designed to guide you through setting up your first Gatsby site.",
-    color: '#E95800',
-  },
-  {
-    text: 'How to Guides',
-    url: 'https://www.gatsbyjs.com/docs/how-to/',
-    description:
-      "Practical step-by-step guides to help you achieve a specific goal. Most useful when you're trying to get something done.",
-    color: '#1099A8',
-  },
-  {
-    text: 'Reference Guides',
-    url: 'https://www.gatsbyjs.com/docs/reference/',
-    description:
-      "Nitty-gritty technical descriptions of how Gatsby works. Most useful when you need detailed information about Gatsby's APIs.",
-    color: '#BC027F',
-  },
-  {
-    text: 'Conceptual Guides',
-    url: 'https://www.gatsbyjs.com/docs/conceptual/',
-    description:
-      'Big-picture explanations of higher-level Gatsby concepts. Most useful for building understanding of a particular topic.',
-    color: '#0D96F2',
-  },
-  {
-    text: 'Plugin Library',
-    url: 'https://www.gatsbyjs.com/plugins',
-    description:
-      'Add functionality and customize your Gatsby site or app with thousands of plugins built by our amazing developer community.',
-    color: '#000000',
-  },
-]
-
-// markup
 const IndexPage = () => {
   return (
-    <main style={pageStyles}>
-      <title>Home Page</title>
-      <h1 style={headingStyles}>
-        Congratulations
-        <br />
-        <span style={headingAccentStyles}>— you just made a Gatsby site! </span>
-        <span role="img" aria-label="Party popper emojis">
-          🎉🎉🎉
-        </span>
-      </h1>
-      <p style={paragraphStyles}>
-        Edit <code style={codeStyles}>src/pages/index.js</code> to see this page
-        update in real-time.{' '}
-        <span role="img" aria-label="Sunglasses smiley emoji">
-          😎
-        </span>
-      </p>
-      <ul style={listStyles}>
-        <li style={docLinkStyle}>
-          <a
-            style={linkStyle}
-            href={`${docLink.url}?utm_source=starter&utm_medium=start-page&utm_campaign=minimal-starter`}
-          >
-            {docLink.text}
-          </a>
-        </li>
-        {links.map((link, index) => (
-          <li style={{ ...listItemStyles, color: link.color }} key={index}>
-            <span>
-              <a
-                style={linkStyle}
-                href={`${link.url}?utm_source=starter&utm_medium=start-page&utm_campaign=minimal-starter`}
-              >
-                {link.text}
-              </a>
-              <p style={descriptionStyle}>{link.description}</p>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <img
-        alt="Gatsby G Logo"
-        src="data:image/svg+xml,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2a10 10 0 110 20 10 10 0 010-20zm0 2c-3.73 0-6.86 2.55-7.75 6L14 19.75c3.45-.89 6-4.02 6-7.75h-5.25v1.5h3.45a6.37 6.37 0 01-3.89 4.44L6.06 9.69C7 7.31 9.3 5.63 12 5.63c2.13 0 4 1.04 5.18 2.65l1.23-1.06A7.959 7.959 0 0012 4zm-8 8a8 8 0 008 8c.04 0 .09 0-8-8z' fill='%23639'/%3E%3C/svg%3E"
-      />
-    </main>
+    <MainLayout>
+      <Features />
+      <Companies />
+      <Community />
+    </MainLayout>
   )
 }
 

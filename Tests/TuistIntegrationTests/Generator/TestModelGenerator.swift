@@ -1,8 +1,8 @@
 import Foundation
 import TSCBasic
 import TuistCore
-
 import TuistCoreTesting
+import TuistGraph
 import TuistLoaderTesting
 @testable import TuistGenerator
 @testable import TuistSupport
@@ -95,7 +95,12 @@ final class TestModelGenerator {
     }
 
     private func createWorkspace(path: AbsolutePath, projects: [String]) throws -> Workspace {
-        Workspace(path: path, name: "Workspace", projects: projects.map { pathTo($0) })
+        Workspace(
+            path: path,
+            xcWorkspacePath: path.appending(component: "Workspace.xcworkspace"),
+            name: "Workspace",
+            projects: projects.map { pathTo($0) }
+        )
     }
 
     private func createProject(path: AbsolutePath, name: String, settings: Settings, targets: [Target], packages: [Package] = [], schemes: [Scheme]) -> Project {

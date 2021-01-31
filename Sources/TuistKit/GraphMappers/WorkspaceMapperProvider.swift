@@ -1,6 +1,7 @@
 import Foundation
 import TuistCore
 import TuistGenerator
+import TuistGraph
 
 protocol WorkspaceMapperProviding {
     func mapper(config: Config) -> WorkspaceMapping
@@ -13,7 +14,7 @@ final class WorkspaceMapperProvider: WorkspaceMapperProviding {
         self.init(projectMapperProvider: ProjectMapperProvider(contentHasher: contentHasher))
     }
 
-    init(projectMapperProvider: ProjectMapperProviding) {
+    init(projectMapperProvider: ProjectMapperProviding = ProjectMapperProvider()) {
         self.projectMapperProvider = projectMapperProvider
     }
 

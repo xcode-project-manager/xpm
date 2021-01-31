@@ -2,6 +2,8 @@ import Foundation
 import TSCBasic
 import TuistCore
 import TuistCoreTesting
+import TuistGraph
+import TuistGraphTesting
 import TuistSupport
 import XcodeProj
 import XCTest
@@ -27,10 +29,13 @@ final class WorkspaceGeneratorIntegrationTests: TuistTestCase {
         // Given
         let temporaryPath = try self.temporaryPath()
         let projects = (0 ..< 20).map {
-            Project.test(path: temporaryPath.appending(component: "Project\($0)"),
-                         name: "Test",
-                         settings: .default,
-                         targets: [Target.test(name: "Project\($0)_Target")])
+            Project.test(
+                path: temporaryPath.appending(component: "Project\($0)"),
+                xcodeProjPath: temporaryPath.appending(components: "Project\($0)", "Project.xcodeproj"),
+                name: "Test",
+                settings: .default,
+                targets: [Target.test(name: "Project\($0)_Target")]
+            )
         }
         var graph = Graph.create(projects: projects,
                                  dependencies: projects.flatMap { project in
@@ -38,7 +43,10 @@ final class WorkspaceGeneratorIntegrationTests: TuistTestCase {
                                          (project: project, target: target, dependencies: [])
                                      }
                                  })
-        let workspace = Workspace.test(path: temporaryPath, projects: projects.map(\.path))
+        let workspace = Workspace.test(
+            path: temporaryPath,
+            projects: projects.map(\.path)
+        )
         graph = graph.with(workspace: workspace)
         let valueGraph = ValueGraph(graph: graph)
         let graphTraverser = ValueGraphTraverser(graph: valueGraph)

@@ -2,6 +2,7 @@ import Foundation
 import ProjectDescription
 import TSCBasic
 import TuistCore
+import TuistGraph
 import TuistSupport
 import XCTest
 
@@ -15,17 +16,14 @@ final class TargetActionManifestMapperTests: TuistUnitTestCase {
         let generatorPaths = GeneratorPaths(manifestDirectory: temporaryPath)
         let manifest = ProjectDescription.TargetAction.test(name: "MyScript",
                                                             tool: "my_tool",
-                                                            path: "my/path",
                                                             order: .pre,
                                                             arguments: ["arg1", "arg2"])
         // When
-        let model = try TuistCore.TargetAction.from(manifest: manifest, generatorPaths: generatorPaths)
+        let model = try TuistGraph.TargetAction.from(manifest: manifest, generatorPaths: generatorPaths)
 
         // Then
         XCTAssertEqual(model.name, "MyScript")
-        XCTAssertEqual(model.tool, "my_tool")
-        XCTAssertEqual(model.path, temporaryPath.appending(RelativePath("my/path")))
+        XCTAssertEqual(model.script, .tool("my_tool", ["arg1", "arg2"]))
         XCTAssertEqual(model.order, .pre)
-        XCTAssertEqual(model.arguments, ["arg1", "arg2"])
     }
 }

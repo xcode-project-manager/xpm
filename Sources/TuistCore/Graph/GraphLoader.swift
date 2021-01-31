@@ -1,5 +1,6 @@
 import Foundation
 import TSCBasic
+import TuistGraph
 import TuistSupport
 
 enum DependencyGraphLoadError: FatalError, Equatable {
@@ -95,7 +96,12 @@ public class GraphLoader: GraphLoading {
         let entryNodes: [GraphNode] = try project.targets.map { target in
             try self.loadTarget(name: target.name, path: path, graphLoaderCache: graphLoaderCache, graphCircularDetector: graphCircularDetector)
         }
-        let workspace = Workspace(path: project.path, name: project.name, projects: [project.path])
+        let workspace = Workspace(
+            path: project.path,
+            xcWorkspacePath: project.path.appending(component: "\(project.name).xcworkspace"),
+            name: project.name,
+            projects: [project.path]
+        )
 
         let graph = Graph(
             name: project.name,
@@ -110,15 +116,20 @@ public class GraphLoader: GraphLoading {
     public func loadWorkspace(path: AbsolutePath) throws -> Graph {
         let graphLoaderCache = GraphLoaderCache()
         let graphCircularDetector = GraphCircularDetector()
-        let workspace = try modelLoader.loadWorkspace(at: path)
+        var workspace = try modelLoader.loadWorkspace(at: path)
 
-        let projects = try workspace.projects.map { (projectPath) -> (AbsolutePath, Project) in
-            try (projectPath, self.loadProject(at: projectPath, graphLoaderCache: graphLoaderCache, graphCircularDetector: graphCircularDetector))
-        }
+        let projects = try workspace.projects
+            .map { projectPath in
+                try self.loadProject(
+                    at: projectPath,
+                    graphLoaderCache: graphLoaderCache,
+                    graphCircularDetector: graphCircularDetector
+                )
+            }
 
         let entryNodes = try projects.flatMap { (project) -> [TargetNode] in
-            let projectPath = project.0
-            let projectManifest = project.1
+            let projectPath = project.path
+            let projectManifest = project
             return try projectManifest.targets.map { target in
                 try self.loadTarget(name: target.name,
                                     path: projectPath,

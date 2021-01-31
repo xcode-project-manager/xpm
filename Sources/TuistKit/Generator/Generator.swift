@@ -2,6 +2,7 @@ import Foundation
 import TSCBasic
 import TuistCore
 import TuistGenerator
+import TuistGraph
 import TuistLoader
 import TuistSigning
 import TuistSupport
@@ -34,18 +35,23 @@ class Generator: Generating {
     private let workspaceMapperProvider: WorkspaceMapperProviding
     private let manifestLoader: ManifestLoading
 
-    convenience init(contentHasher: ContentHashing) {
-        self.init(projectMapperProvider: ProjectMapperProvider(contentHasher: contentHasher),
-                  graphMapperProvider: GraphMapperProvider(),
-                  workspaceMapperProvider: WorkspaceMapperProvider(contentHasher: contentHasher),
-                  manifestLoaderFactory: ManifestLoaderFactory())
+    convenience init(
+        contentHasher: ContentHashing
+    ) {
+        self.init(
+            projectMapperProvider: ProjectMapperProvider(contentHasher: contentHasher),
+            graphMapperProvider: GraphMapperProvider(),
+            workspaceMapperProvider: WorkspaceMapperProvider(contentHasher: contentHasher),
+            manifestLoaderFactory: ManifestLoaderFactory()
+        )
     }
 
-    init(projectMapperProvider: ProjectMapperProviding,
-         graphMapperProvider: GraphMapperProviding,
-         workspaceMapperProvider: WorkspaceMapperProviding,
-         manifestLoaderFactory: ManifestLoaderFactory)
-    {
+    init(
+        projectMapperProvider: ProjectMapperProviding,
+        graphMapperProvider: GraphMapperProviding,
+        workspaceMapperProvider: WorkspaceMapperProviding,
+        manifestLoaderFactory: ManifestLoaderFactory
+    ) {
         let manifestLoader = manifestLoaderFactory.createManifestLoader()
         recursiveManifestLoader = RecursiveManifestLoader(manifestLoader: manifestLoader)
         let modelLoader = GeneratorModelLoader(manifestLoader: manifestLoader,
@@ -226,7 +232,12 @@ class Generator: Generating {
         let projects = try convert(manifests: manifests)
 
         let workspaceName = manifests.projects[path]?.name ?? "Workspace"
-        let workspace = Workspace(path: path, name: workspaceName, projects: [])
+        let workspace = Workspace(
+            path: path,
+            xcWorkspacePath: path.appending(component: "\(workspaceName).xcworkspace"),
+            name: workspaceName,
+            projects: []
+        )
         let models = (workspace: workspace, projects: projects)
 
         // Apply any registered model mappers
@@ -242,9 +253,10 @@ class Generator: Generating {
 
         // Apply graph mappers
         let (updatedGraph, graphMapperSideEffects) = try graphMapperProvider.mapper(config: config).map(graph: graph)
-        let updatedWorkspace = updatedModels
+        var updatedWorkspace = updatedModels
             .workspace
-            .merging(projects: updatedGraph.projects.map(\.path))
+
+        updatedWorkspace = updatedWorkspace.merging(projects: updatedGraph.projects.map(\.path))
 
         return (
             project,
@@ -281,13 +293,15 @@ class Generator: Generating {
         let graph = try cachedGraphLoader.loadWorkspace(path: path)
 
         // Apply graph mappers
-        let (mappedGraph, graphMapperSideEffects) = try graphMapperProvider.mapper(config: config).map(graph: graph)
+        let (mappedGraph, graphMapperSideEffects) = try graphMapperProvider
+            .mapper(config: config)
+            .map(graph: graph)
 
         return (mappedGraph, modelMapperSideEffects + graphMapperSideEffects)
     }
 
     private func convert(manifests: LoadedProjects,
-                         context: ExecutionContext = .concurrent) throws -> [TuistCore.Project]
+                         context: ExecutionContext = .concurrent) throws -> [TuistGraph.Project]
     {
         let tuples = manifests.projects.map { (path: $0.key, manifest: $0.value) }
         return try tuples.map(context: context) {
@@ -296,7 +310,7 @@ class Generator: Generating {
     }
 
     private func convert(manifests: LoadedWorkspace,
-                         context: ExecutionContext = .concurrent) throws -> (workspace: Workspace, projects: [TuistCore.Project])
+                         context: ExecutionContext = .concurrent) throws -> (workspace: Workspace, projects: [TuistGraph.Project])
     {
         let workspace = try converter.convert(manifest: manifests.workspace, path: manifests.path)
         let tuples = manifests.projects.map { (path: $0.key, manifest: $0.value) }

@@ -1,6 +1,7 @@
 import Foundation
 import TSCBasic
 import TuistCore
+import TuistGraph
 
 /// Static Products Graph Linter
 ///
@@ -166,6 +167,22 @@ class StaticProductsGraphLinter: StaticProductsGraphLinting {
             // it should be treated as a separate graph that isn't connected to the main
             // app's graph. It's an unfortunate side effect of declaring a target application
             // of a UI test bundle as a dependency.
+            return false
+        case (.app, .appExtension):
+            // App Extensions can safely link the same static products as apps
+            // as they are an independent product
+            return false
+        case (.app, .watch2App):
+            // Watch Apps (and their extension) can safely link the same static products as apps
+            // as they are an independent product
+            return false
+        case (.app, .appClip):
+            // App Clips can safely link the same static products as apps
+            // as they are an independent product
+            return false
+        case (.app, .messagesExtension):
+            // Message Extensions can safely link the same static products as apps
+            // as they are an independent product
             return false
         default:
             return true

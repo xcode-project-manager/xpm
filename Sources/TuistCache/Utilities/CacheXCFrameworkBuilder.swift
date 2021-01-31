@@ -3,6 +3,7 @@ import RxBlocking
 import RxSwift
 import TSCBasic
 import TuistCore
+import TuistGraph
 import TuistSupport
 
 public final class CacheXCFrameworkBuilder: CacheArtifactBuilding {
@@ -98,7 +99,7 @@ public final class CacheXCFrameworkBuilder: CacheArtifactBuilding {
                 logger.notice("Exporting xcframework for \(target.platform.caseValue)", metadata: .subsection)
             })
             .toBlocking()
-            .single()
+            .last()
     }
 
     fileprivate func deviceBuild(projectTarget: XcodeBuildTarget,

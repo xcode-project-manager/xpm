@@ -1,8 +1,21 @@
 import Foundation
 import TSCBasic
+import TuistGraph
 @testable import TuistCore
 
 public final class MockXCFrameworkMetadataProvider: MockPrecompiledMetadataProvider, XCFrameworkMetadataProviding {
+    public var loadMetadataStub: ((AbsolutePath) throws -> XCFrameworkMetadata)?
+    public func loadMetadata(at path: AbsolutePath) throws -> XCFrameworkMetadata {
+        if let loadMetadataStub = loadMetadataStub {
+            return try loadMetadataStub(path)
+        } else {
+            return XCFrameworkMetadata.test(
+                path: path,
+                primaryBinaryPath: path.appending(RelativePath("ios-arm64/binary"))
+            )
+        }
+    }
+
     public var infoPlistStub: ((AbsolutePath) throws -> XCFrameworkInfoPlist)?
     public func infoPlist(xcframeworkPath: AbsolutePath) throws -> XCFrameworkInfoPlist {
         if let infoPlistStub = infoPlistStub {

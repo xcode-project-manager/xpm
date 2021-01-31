@@ -1,8 +1,9 @@
 import TuistCore
+import TuistGraph
 import XCTest
-
 @testable import TuistCache
 @testable import TuistCoreTesting
+@testable import TuistGraphTesting
 @testable import TuistSupportTesting
 
 final class CacheGraphLinterTests: TuistUnitTestCase {
@@ -16,7 +17,7 @@ final class CacheGraphLinterTests: TuistUnitTestCase {
     func test_lint() {
         // Given
         let target = Target.test(actions: [
-            .init(name: "test", order: .post),
+            .init(name: "test", order: .post, script: .embedded("echo 'Hello World'")),
         ])
         let targetNode = TargetNode.test(target: target)
         let graph = Graph.test(entryNodes: [targetNode],

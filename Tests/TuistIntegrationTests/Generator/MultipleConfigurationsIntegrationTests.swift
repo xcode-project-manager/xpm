@@ -1,5 +1,6 @@
 import TSCBasic
 import TuistCore
+import TuistGraph
 import TuistLoaderTesting
 import XcodeProj
 import XCTest
@@ -341,7 +342,12 @@ final class MultipleConfigurationsIntegrationTests: TuistUnitTestCase {
     }
 
     private func createWorkspace(path: AbsolutePath, projects: [String]) throws -> Workspace {
-        Workspace(path: path, name: "Workspace", projects: try projects.map { try pathTo($0) })
+        Workspace(
+            path: path,
+            xcWorkspacePath: path.appending(component: "Workspace.xcworkspace"),
+            name: "Workspace",
+            projects: try projects.map { try pathTo($0) }
+        )
     }
 
     private func createProject(path: AbsolutePath, settings: Settings, targets: [Target], packages: [Package] = [], schemes: [Scheme]) -> Project {

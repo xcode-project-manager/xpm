@@ -67,8 +67,6 @@ public class Glob: Collection {
 
     public static var defaultBehavior = GlobBehaviorBashV4
 
-    private var isDirectoryCache = [String: Bool]()
-
     public let behavior: Behavior
     var paths = [String]()
     public var startIndex: Int { paths.startIndex }
@@ -103,8 +101,6 @@ public class Glob: Collection {
         paths = Array(Set(paths)).sorted { lhs, rhs in
             lhs.compare(rhs) != ComparisonResult.orderedDescending
         }
-
-        clearCaches()
     }
 
     // MARK: Private
@@ -137,7 +133,6 @@ public class Glob: Collection {
             }
         } catch {
             directories = []
-            print("Error parsing file system item: \(error)")
         }
 
         if behavior.includesFilesFromRootOfGlobstar {
@@ -162,10 +157,6 @@ public class Glob: Collection {
     }
 
     private func isDirectory(path: String) -> Bool {
-        if let isDirectory = isDirectoryCache[path] {
-            return isDirectory
-        }
-
         #if os(macOS)
             var isDirectoryBool = ObjCBool(false)
         #else
@@ -178,13 +169,7 @@ public class Glob: Collection {
             isDirectory = isDirectory && isDirectoryBool
         #endif
 
-        isDirectoryCache[path] = isDirectory
-
         return isDirectory
-    }
-
-    private func clearCaches() {
-        isDirectoryCache.removeAll()
     }
 
     private func populateFiles(gt: glob_t, includeFiles: Bool) {

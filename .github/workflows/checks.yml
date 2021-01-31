@@ -1,11 +1,20 @@
 # https://help.github.com/en/github/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idname
 name: Checks
 
+# This workflow only runs when there are changes to the Swift code.
 on:
   push:
     branches:
       - main
   pull_request:
+    paths:
+      - Sources/**
+      - Tests/**
+      - tools/fixturegen/**
+      - tools/tuistbench/**
+
+env:
+  RUBY_VERSION: '2.7.2'
 
 jobs:
   swiftformat:
@@ -20,7 +29,7 @@ jobs:
         run: sudo xcode-select -switch /Applications/Xcode_${{ matrix.xcode }}.app
       - uses: actions/setup-ruby@v1
         with:
-          ruby-version: '2.x'
+          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Install Bundler 2.1.4
         run: gem install bundler --version 2.1.4
       - name: Install Bundler dependencies
@@ -39,7 +48,7 @@ jobs:
         run: sudo xcode-select -switch /Applications/Xcode_${{ matrix.xcode }}.app
       - uses: actions/setup-ruby@v1
         with:
-          ruby-version: '2.x'
+          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Install Bundler 2.1.4
         run: gem install bundler --version 2.1.4
       - name: Install Bundler dependencies

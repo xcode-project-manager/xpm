@@ -2,6 +2,8 @@ import Foundation
 import RxSwift
 import TSCBasic
 import TuistCore
+import TuistGraph
+import TuistGraphTesting
 import TuistSupport
 import XCTest
 
@@ -82,7 +84,7 @@ final class BuildServiceTests: TuistUnitTestCase {
             XCTAssertEqual(_scheme, scheme.name)
             XCTAssertTrue(_clean)
             XCTAssertEqual(_arguments, buildArguments)
-            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+            return Observable.just(.standardOutput(.init(raw: "success")))
         }
 
         // Then
@@ -127,7 +129,7 @@ final class BuildServiceTests: TuistUnitTestCase {
             XCTAssertEqual(_scheme, scheme.name)
             XCTAssertTrue(_clean)
             XCTAssertEqual(_arguments, buildArguments)
-            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+            return Observable.just(.standardOutput(.init(raw: "success")))
         }
 
         // Then
@@ -183,7 +185,7 @@ final class BuildServiceTests: TuistUnitTestCase {
             } else {
                 XCTFail("unexpected scheme \(_scheme)")
             }
-            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+            return Observable.just(.standardOutput(.init(raw: "success")))
         }
 
         // Then
@@ -234,7 +236,7 @@ final class BuildServiceTests: TuistUnitTestCase {
             } else {
                 XCTFail("unexpected scheme \(_scheme)")
             }
-            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+            return Observable.just(.standardOutput(.init(raw: "success")))
         }
 
         // Then

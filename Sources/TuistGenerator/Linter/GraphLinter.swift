@@ -1,6 +1,7 @@
 import Foundation
 import struct TSCUtility.Version
 import TuistCore
+import TuistGraph
 import TuistSupport
 
 public protocol GraphLinting: AnyObject {
@@ -239,7 +240,7 @@ public class GraphLinter: GraphLinting {
     }
 
     struct LintableTarget: Equatable, Hashable {
-        let platform: TuistCore.Platform
+        let platform: TuistGraph.Platform
         let product: Product
     }
 
@@ -329,6 +330,7 @@ public class GraphLinter: GraphLinting {
         ],
         LintableTarget(platform: .macOS, product: .staticLibrary): [
             LintableTarget(platform: .macOS, product: .staticLibrary),
+            LintableTarget(platform: .macOS, product: .dynamicLibrary),
             LintableTarget(platform: .macOS, product: .staticFramework),
             LintableTarget(platform: .macOS, product: .framework),
             LintableTarget(platform: .macOS, product: .bundle),
@@ -370,6 +372,7 @@ public class GraphLinter: GraphLinting {
         ],
         LintableTarget(platform: .macOS, product: .commandLineTool): [
             LintableTarget(platform: .macOS, product: .staticLibrary),
+            LintableTarget(platform: .macOS, product: .dynamicLibrary),
             LintableTarget(platform: .macOS, product: .staticFramework),
         ],
         // tvOS

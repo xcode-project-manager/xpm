@@ -2,11 +2,13 @@ import Foundation
 import TSCBasic
 import struct TSCUtility.Version
 import TuistCore
+import TuistGraph
 import TuistSupport
 import XCTest
 
 @testable import TuistCoreTesting
 @testable import TuistGenerator
+@testable import TuistGraphTesting
 @testable import TuistSupportTesting
 
 final class GraphLinterTests: TuistUnitTestCase {
@@ -858,10 +860,7 @@ final class GraphLinterTests: TuistUnitTestCase {
         let got = subject.lint(graphTraverser: graphTraverser)
 
         // Then
-        XCTAssertEqual(got, [
-            LintingIssue(reason: "Target App has a dependency with target Dynamic of type dynamic library for platform 'macOS' which is invalid or not supported yet.",
-                         severity: .error),
-        ])
+        XCTAssertEmpty(got)
     }
 
     func test_lint_when_cli_tool_links_supported_dependencies() throws {

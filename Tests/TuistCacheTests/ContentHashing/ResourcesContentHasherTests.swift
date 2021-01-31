@@ -3,6 +3,7 @@ import TSCBasic
 import TuistCacheTesting
 import TuistCore
 import TuistCoreTesting
+import TuistGraph
 import TuistSupport
 import XCTest
 @testable import TuistCache
@@ -10,13 +11,13 @@ import XCTest
 
 final class ResourcesContentHasherTests: TuistUnitTestCase {
     private var subject: ResourcesContentHasher!
-    private var mockContentHasher: MockContentHashing!
+    private var mockContentHasher: MockContentHasher!
     private let filePath1 = AbsolutePath("/file1")
     private let filePath2 = AbsolutePath("/file2")
 
     override func setUp() {
         super.setUp()
-        mockContentHasher = MockContentHashing()
+        mockContentHasher = MockContentHasher()
         subject = ResourcesContentHasher(contentHasher: mockContentHasher)
     }
 
@@ -56,5 +57,16 @@ final class ResourcesContentHasherTests: TuistUnitTestCase {
         // Then
         XCTAssertEqual(mockContentHasher.hashPathCallCount, 2)
         XCTAssertEqual(hash, "1;2")
+    }
+
+    func test_hash_sortsTheResourcesBeforeCalculatingTheHash() throws {
+        // Given
+        let file1 = FileElement.file(path: filePath1)
+        let file2 = FileElement.folderReference(path: filePath2)
+        mockContentHasher.stubHashForPath[filePath1] = "1"
+        mockContentHasher.stubHashForPath[filePath2] = "2"
+
+        // When/Then
+        XCTAssertEqual(try subject.hash(resources: [file1, file2]), try subject.hash(resources: [file2, file1]))
     }
 }

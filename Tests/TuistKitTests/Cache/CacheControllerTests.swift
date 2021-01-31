@@ -4,6 +4,8 @@ import TuistCache
 import TuistCacheTesting
 import TuistCore
 import TuistCoreTesting
+import TuistGraph
+import TuistGraphTesting
 import TuistLoader
 import TuistLoaderTesting
 import TuistSupport
@@ -12,26 +14,6 @@ import XCTest
 @testable import TuistCore
 @testable import TuistKit
 @testable import TuistSupportTesting
-
-final class CacheControllerProjectMapperProviderTests: TuistUnitTestCase {
-    var subject: CacheControllerProjectMapperProvider!
-
-    override func setUp() {
-        subject = CacheControllerProjectMapperProvider(contentHasher: ContentHasher())
-    }
-
-    func test_mapper_includes_the_cache_build_phase_project_mapper() throws {
-        // Given
-        let config = Config.test()
-
-        // When
-        let got = subject.mapper(config: config)
-
-        // Then
-        let sequentialMapper = try XCTUnwrap(got as? SequentialProjectMapper)
-        XCTAssertTrue(sequentialMapper.mappers.last is CacheBuildPhaseProjectMapper)
-    }
-}
 
 final class CacheControllerTests: TuistUnitTestCase {
     var generator: MockGenerator!
@@ -43,6 +25,7 @@ final class CacheControllerTests: TuistUnitTestCase {
     var projectGeneratorProvider: MockCacheControllerProjectGeneratorProvider!
     var config: Config!
     var cacheGraphLinter: MockCacheGraphLinter!
+    var focusServiceProjectGeneratorFactory: MockFocusServiceProjectGeneratorFactory!
 
     override func setUp() {
         generator = MockGenerator()
@@ -54,11 +37,14 @@ final class CacheControllerTests: TuistUnitTestCase {
         projectGeneratorProvider = MockCacheControllerProjectGeneratorProvider()
         projectGeneratorProvider.stubbedGeneratorResult = generator
         cacheGraphLinter = MockCacheGraphLinter()
+        focusServiceProjectGeneratorFactory = MockFocusServiceProjectGeneratorFactory()
+        focusServiceProjectGeneratorFactory.stubbedGeneratorResult = generator
         subject = CacheController(cache: cache,
                                   artifactBuilder: artifactBuilder,
                                   projectGeneratorProvider: projectGeneratorProvider,
                                   graphContentHasher: graphContentHasher,
-                                  cacheGraphLinter: cacheGraphLinter)
+                                  cacheGraphLinter: cacheGraphLinter,
+                                  focusServiceProjectGeneratorFactory: focusServiceProjectGeneratorFactory)
 
         super.setUp()
     }
@@ -72,6 +58,7 @@ final class CacheControllerTests: TuistUnitTestCase {
         cache = nil
         subject = nil
         config = nil
+        focusServiceProjectGeneratorFactory = nil
     }
 
     func test_cache_builds_and_caches_the_frameworks() throws {
@@ -79,16 +66,24 @@ final class CacheControllerTests: TuistUnitTestCase {
         let path = try temporaryPath()
         let xcworkspacePath = path.appending(component: "Project.xcworkspace")
         let project = Project.test(path: path, name: "Cache")
-        let aTarget = Target.test(name: "A")
-        let bTarget = Target.test(name: "B")
-        let aFrameworkPath = path.appending(component: "A.framework")
-        let bFrameworkPath = path.appending(component: "B.framework")
+        let targetNames = ["foo", "bar", "baz"].shuffled()
+        let aTarget = Target.test(name: targetNames[0])
+        let bTarget = Target.test(name: targetNames[1])
+        let cTarget = Target.test(name: targetNames[2])
+        let aFrameworkPath = path.appending(component: "\(aTarget.name).framework")
+        let bFrameworkPath = path.appending(component: "\(bTarget.name).framework")
+        let cFrameworkPath = path.appending(component: "\(cTarget.name).framework")
         try FileHandler.shared.createFolder(aFrameworkPath)
         try FileHandler.shared.createFolder(bFrameworkPath)
+        try FileHandler.shared.createFolder(cFrameworkPath)
 
+        let aTargetNode = TargetNode.test(project: project, target: aTarget)
+        let bTargetNode = TargetNode.test(project: project, target: bTarget, dependencies: [aTargetNode])
+        let cTargetNode = TargetNode.test(project: project, target: cTarget, dependencies: [bTargetNode])
         let nodeWithHashes = [
-            TargetNode.test(project: project, target: aTarget): "A_HASH",
-            TargetNode.test(project: project, target: bTarget): "B_HASH",
+            aTargetNode: "\(aTarget.name)_HASH",
+            bTargetNode: "\(bTarget.name)_HASH",
+            cTargetNode: "\(cTarget.name)_HASH",
         ]
         let graph = Graph.test(projects: [project],
                                targets: nodeWithHashes.keys.reduce(into: [project.path: [TargetNode]()]) { $0[project.path]?.append($1) })
@@ -101,6 +96,10 @@ final class CacheControllerTests: TuistUnitTestCase {
             XCTAssertEqual(loadPath, path)
             return (xcworkspacePath, graph)
         }
+        generator.generateStub = { (loadPath, _) -> AbsolutePath in
+            XCTAssertEqual(loadPath, path)
+            return xcworkspacePath
+        }
         graphContentHasher.stubbedContentHashesResult = nodeWithHashes
         artifactBuilder.stubbedCacheOutputType = .xcframework
 
@@ -110,10 +109,17 @@ final class CacheControllerTests: TuistUnitTestCase {
         XCTAssertPrinterOutputContains("""
         Hashing cacheable targets
         Building cacheable targets
+        Building cacheable targets: \(aTarget.name), 1 out of 3
+        Focusing cacheable targets: \(aTarget.name)
+        Building cacheable targets: \(bTarget.name), 2 out of 3
+        Focusing cacheable targets: \(bTarget.name)
+        Building cacheable targets: \(cTarget.name), 3 out of 3
+        Focusing cacheable targets: \(cTarget.name)
         All cacheable targets have been cached successfully as xcframeworks
         """)
         XCTAssertEqual(cacheGraphLinter.invokedLintCount, 1)
-        XCTAssertEqual(artifactBuilder.invokedBuildWorkspacePathParametersList.first?.target, aTarget)
-        XCTAssertEqual(artifactBuilder.invokedBuildWorkspacePathParametersList.last?.target, bTarget)
+        XCTAssertEqual(artifactBuilder.invokedBuildWorkspacePathParametersList[0].target, aTarget)
+        XCTAssertEqual(artifactBuilder.invokedBuildWorkspacePathParametersList[1].target, bTarget)
+        XCTAssertEqual(artifactBuilder.invokedBuildWorkspacePathParametersList[2].target, cTarget)
     }
 }
