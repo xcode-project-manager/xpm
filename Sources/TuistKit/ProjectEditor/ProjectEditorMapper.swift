@@ -40,6 +40,22 @@ final class ProjectEditorMapper: ProjectEditorMapping {
         projectDescriptionPath: AbsolutePath
     ) throws -> ValueGraph {
         let swiftVersion = try System.shared.swiftVersion()
+        #if arch(x86_64)
+        let projectSettings = Settings(
+            base: [
+                "ONLY_ACTIVE_ARCH": "NO",
+                "EXCLUDED_ARCHS": "arm64",
+            ],
+            configurations: Settings.default.configurations,
+            defaultSettings: .recommended
+        )
+        #else
+        let projectSettings = Settings(
+            base: [],
+            configurations: Settings.default.configurations,
+            defaultSettings: .recommended
+        )
+        #endif
 
         let pluginsProject = mapPluginsProject(
             pluginManifests: editablePluginManifests,
@@ -47,7 +63,8 @@ final class ProjectEditorMapper: ProjectEditorMapping {
             swiftVersion: swiftVersion,
             sourceRootPath: sourceRootPath,
             destinationDirectory: destinationDirectory,
-            tuistPath: tuistPath
+            tuistPath: tuistPath,
+            settings: projectSettings
         )
 
         let manifestsProject = mapManifestsProject(
@@ -63,7 +80,8 @@ final class ProjectEditorMapper: ProjectEditorMapping {
             configPath: configPath,
             dependenciesPath: dependenciesPath,
             editablePluginTargets: editablePluginManifests.map(\.name),
-            pluginProjectDescriptionHelpersModule: pluginProjectDescriptionHelpersModule
+            pluginProjectDescriptionHelpersModule: pluginProjectDescriptionHelpersModule,
+            settings: projectSettings
         )
 
         let projects = [pluginsProject, manifestsProject].compactMap { $0 }
@@ -129,7 +147,8 @@ final class ProjectEditorMapper: ProjectEditorMapping {
         configPath: AbsolutePath?,
         dependenciesPath: AbsolutePath?,
         editablePluginTargets: [String],
-        pluginProjectDescriptionHelpersModule: [ProjectDescriptionHelpersModule]
+        pluginProjectDescriptionHelpersModule: [ProjectDescriptionHelpersModule],
+        settings: Settings
     ) -> Project? {
         guard !projectManifests.isEmpty else { return nil }
 
@@ -224,14 +243,6 @@ final class ProjectEditorMapper: ProjectEditorMapping {
         let arguments = Arguments(launchArguments: [LaunchArgument(name: "generate --path \(sourceRootPath)", isEnabled: true)])
         let runAction = RunAction(configurationName: "Debug", executable: nil, filePath: tuistPath, arguments: arguments, diagnosticsOptions: Set())
         let scheme = Scheme(name: projectName, shared: true, buildAction: buildAction, runAction: runAction)
-        let projectSettings = Settings(
-            base: [
-                "ONLY_ACTIVE_ARCH": "NO",
-                "EXCLUDED_ARCHS": "arm64",
-            ],
-            configurations: Settings.default.configurations,
-            defaultSettings: .recommended
-        )
 
         return Project(
             path: projectPath,
@@ -240,7 +251,7 @@ final class ProjectEditorMapper: ProjectEditorMapping {
             name: projectName,
             organizationName: nil,
             developmentRegion: nil,
-            settings: projectSettings,
+            settings: settings,
             filesGroup: manifestsFilesGroup,
             targets: targets,
             packages: [],
@@ -256,7 +267,8 @@ final class ProjectEditorMapper: ProjectEditorMapping {
         swiftVersion: String,
         sourceRootPath: AbsolutePath,
         destinationDirectory: AbsolutePath,
-        tuistPath _: AbsolutePath
+        tuistPath _: AbsolutePath,
+        settings: Settings
     ) -> Project? {
         guard !pluginManifests.isEmpty else { return nil }
 
@@ -296,15 +308,6 @@ final class ProjectEditorMapper: ProjectEditorMapping {
 
         let allSchemes = schemes + [allPluginsScheme]
 
-        let projectSettings = Settings(
-            base: [
-                "ONLY_ACTIVE_ARCH": "NO",
-                "EXCLUDED_ARCHS": "arm64",
-            ],
-            configurations: Settings.default.configurations,
-            defaultSettings: .recommended
-        )
-
         return Project(
             path: projectPath,
             sourceRootPath: sourceRootPath,
@@ -312,7 +315,7 @@ final class ProjectEditorMapper: ProjectEditorMapping {
             name: projectName,
             organizationName: nil,
             developmentRegion: nil,
-            settings: projectSettings,
+            settings: settings,
             filesGroup: pluginsFilesGroup,
             targets: pluginTargets,
             packages: [],
