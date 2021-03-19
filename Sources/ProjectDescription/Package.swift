@@ -4,7 +4,7 @@
 ///     - remote: A Git URL to the source of the package,
 ///     and a requirement for the version of the package.
 ///     - local: A relative path to the package.
-public enum Package: Equatable, Codable {
+public enum Package: Equatable, Codable, Hashable {
     case remote(url: String, requirement: Requirement)
     case local(path: Path)
 
@@ -19,6 +19,18 @@ public enum Package: Equatable, Codable {
         case productName
         case requirement
         case path
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        switch self {
+        case let .local(path):
+            hasher.combine("local")
+            hasher.combine(path.pathString)
+        case let .remote(url, requirement):
+            hasher.combine("remote")
+            hasher.combine(url)
+            hasher.combine(requirement)
+        }
     }
 
     public init(from decoder: Decoder) throws {
@@ -50,7 +62,7 @@ public enum Package: Equatable, Codable {
 }
 
 extension Package {
-    public enum Requirement: Codable, Equatable {
+    public enum Requirement: Codable, Equatable, Hashable {
         case upToNextMajor(from: Version)
         case upToNextMinor(from: Version)
         case range(from: Version, to: Version)

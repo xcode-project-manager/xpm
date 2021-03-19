@@ -1,7 +1,6 @@
 import Foundation
 import TuistGraph
 import XCTest
-@testable import TuistCore
 
 final class BuildConfigurationTests: XCTestCase {
     func test_name_returnsTheRightValue_whenDebug() {

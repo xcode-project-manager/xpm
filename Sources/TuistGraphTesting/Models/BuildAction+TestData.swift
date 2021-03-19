@@ -1,6 +1,5 @@
 import Foundation
 import TSCBasic
-import TuistSupport
 @testable import TuistGraph
 
 public extension BuildAction {

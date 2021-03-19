@@ -1,7 +1,5 @@
 import Foundation
 import TSCBasic
-import TuistCore
-import TuistCoreTesting
 import TuistGraphTesting
 import XCTest
 @testable import TuistGraph
