@@ -73,7 +73,7 @@ final class TargetDependencyTests: XCTestCase {
     
     func test_dependency_codable() {
         // Given
-        let subject = TargetDependency.dependency(name: "Alamofire")
+        let subject = TargetDependency.dependency(name: "DependencyName")
 
         // Then
         XCTAssertCodable(subject)

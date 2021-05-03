@@ -43,4 +43,22 @@ final class DependencyManifestMapperTests: TuistUnitTestCase {
         }
         XCTAssertEqual(product, "library")
     }
+    
+    func test_from_when_dependency() throws {
+        // Given
+        let dependency = ProjectDescription.TargetDependency.dependency(name: "dependency")
+        let generatorPaths = GeneratorPaths(manifestDirectory: AbsolutePath("/"))
+
+        // When
+        let got = try TuistGraph.TargetDependency.from(manifest: dependency, generatorPaths: generatorPaths)
+
+        // Then
+        guard
+            case let .dependency(name) = got
+        else {
+            XCTFail("Dependency should be package")
+            return
+        }
+        XCTAssertEqual(name, "dependency")
+    }
 }

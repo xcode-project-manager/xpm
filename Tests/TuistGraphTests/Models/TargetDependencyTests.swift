@@ -32,4 +32,12 @@ final class TargetDependencyTests: TuistUnitTestCase {
         // Then
         XCTAssertCodable(subject)
     }
+    
+    func test_codable_dependency() {
+        // Given
+        let subject = TargetDependency.dependency(name: "DependencyName")
+
+        // Then
+        XCTAssertCodable(subject)
+    }
 }
