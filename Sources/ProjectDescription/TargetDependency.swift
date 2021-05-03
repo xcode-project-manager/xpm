@@ -70,6 +70,12 @@ public enum TargetDependency: Codable, Equatable {
 
     /// Dependency on XCTest.
     case xctest
+    
+    /// Dependency on third party dependency defined in a `Dependencies.swift` manifest file.
+    ///
+    /// - Parameters:
+    ///   - name: Name of the dependency.
+    case dependency(name: String)
 
     /// Dependency on system library or framework
     ///
@@ -102,6 +108,8 @@ public enum TargetDependency: Codable, Equatable {
             return "xcframework"
         case .xctest:
             return "xctest"
+        case .dependency:
+            return "dependency"
         }
     }
 }
@@ -173,6 +181,9 @@ extension TargetDependency {
 
         case "xctest":
             self = .xctest
+            
+        case "dependency":
+            self = .dependency(name: try container.decode(String.self, forKey: .name))
 
         default:
             throw CodingError.unknownType(type)
@@ -207,6 +218,8 @@ extension TargetDependency {
             try container.encode(path, forKey: .path)
         case .xctest:
             break
+        case let .dependency(name):
+            try container.encode(name, forKey: .name)
         }
     }
 }
