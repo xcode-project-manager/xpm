@@ -252,6 +252,9 @@ private extension TargetDependency {
             return "xcframework"
         case .xctest:
             return "xctest"
+        case let .dependency(name):
+            #warning("LAXMOREK: IMPLEMENT ME")
+            fatalError()
         }
     }
 
@@ -275,6 +278,9 @@ private extension TargetDependency {
             return path.basename
         case .xctest:
             return "xctest"
+        case let .dependency(name):
+            #warning("LAXMOREK: IMPLEMENT ME")
+            fatalError()
         }
     }
 }

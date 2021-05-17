@@ -55,6 +55,9 @@ public final class DependenciesContentHasher: DependenciesContentHashing {
             return try contentHasher.hash("cocoapods-\(podsHash)")
         case .xctest:
             return try contentHasher.hash("xctest")
+        case let .dependency(name):
+            #warning("LAXMOREK: IMPLEMENT ME")
+            fatalError()
         }
     }
 }

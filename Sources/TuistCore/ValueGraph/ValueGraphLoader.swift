@@ -213,6 +213,10 @@ public final class ValueGraphLoader: ValueGraphLoading {
 
         case .xctest:
             return try loadXCTestSDK(platform: fromPlatform)
+            
+        case let .dependency(name):
+            #warning("LAXMOREK: IMPLEMENT ME")
+            fatalError()
         }
     }
 
