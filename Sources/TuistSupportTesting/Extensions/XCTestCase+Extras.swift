@@ -1,5 +1,6 @@
 import Foundation
 import TSCBasic
+import TuistSupport
 import XCTest
 
 public extension XCTestCase {
@@ -186,5 +187,31 @@ public extension XCTestCase {
             throw XCTUnwrapError.nilValueDetected
         }
         return element
+    }
+
+    // MARK: - HTTPResource
+
+    func XCTAssertHTTPMethod<T, E: Error>(resource: HTTPResource<T, E>, httpMethod: String, file: StaticString = #file, line: UInt = #line) {
+        let request = resource.request()
+        XCTAssertEqual(
+            request.httpMethod,
+            httpMethod,
+            "Expected HTTP method \(httpMethod) but got \(request.httpMethod ?? "")",
+            file: file,
+            line: line
+        )
+    }
+
+    func XCTAssertPath<T, E: Error>(resource: HTTPResource<T, E>, path: String, file: StaticString = #file, line: UInt = #line) {
+        let request = resource.request()
+        let components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+
+        XCTAssertEqual(
+            components.path,
+            path,
+            "Expected request path \(path) but got \(components.path)",
+            file: file,
+            line: line
+        )
     }
 }
