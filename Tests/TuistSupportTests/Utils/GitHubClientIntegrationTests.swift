@@ -5,7 +5,6 @@ import XCTest
 @testable import TuistSupportTesting
 
 final class GitHubClientIntegrationTests: TuistTestCase {
-    
     func test_something() throws {
         let expectation = XCTestExpectation(description: "GitHubClient deferred when token")
         var release: GitHubRelease?
@@ -14,12 +13,10 @@ final class GitHubClientIntegrationTests: TuistTestCase {
             .sink { error in
                 print(error)
                 expectation.fulfill()
-            } receiveValue: { (response) in
+            } receiveValue: { response in
                 print(response)
                 release = response.object
             }
         wait(for: [expectation], timeout: 10.0)
-
-
     }
 }

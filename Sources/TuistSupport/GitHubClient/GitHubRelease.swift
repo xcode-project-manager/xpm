@@ -1,7 +1,7 @@
 import Foundation
 import struct TSCUtility.Version
 
-public struct GitHubRelease: Decodable {
+public struct GitHubRelease: Codable, Equatable {
     /// Release name.
     public let name: String
 
@@ -23,6 +23,19 @@ public struct GitHubRelease: Decodable {
         case draft
         case prerelease
         case assets
+    }
+
+    public init(name: String,
+                tagName: Version,
+                draft: Bool,
+                prerelease: Bool,
+                assets: [GitHubReleaseAsset])
+    {
+        self.name = name
+        self.tagName = tagName
+        self.draft = draft
+        self.prerelease = prerelease
+        self.assets = assets
     }
 
     /// Returns a resource to get the latest release of the given repository.
