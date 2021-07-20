@@ -12,7 +12,7 @@ func templatePath(_ path: String) -> Path {
 }
 
 let template = Template(
-    description: "Default template",
+    description: "UIKit template",
     attributes: [
         nameAttribute,
         platformAttribute,
@@ -24,7 +24,7 @@ let template = Template(
         ),
         .file(
             path: projectPath + "/Project.swift",
-            templatePath: templatePath("AppProject.stencil")
+            templatePath: "AppProject.stencil"
         ),
         .file(
             path: appPath + "/Sources/AppDelegate.swift",
