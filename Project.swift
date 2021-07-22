@@ -27,7 +27,7 @@ let packages: [Package] = [
     .package(url: "https://github.com/stencilproject/Stencil.git", .upToNextMajor(from: "0.14.1")),
     .package(url: "https://github.com/SwiftGen/StencilSwiftKit.git", .upToNextMajor(from: "2.8.0")),
     .package(url: "https://github.com/FabrizioBrancati/Queuer.git", .upToNextMajor(from: "2.1.1")),
-    .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMajor(from: "1.3.8")),
+    .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMajor(from: "1.4.1")),
     .package(url: "https://github.com/tuist/GraphViz.git", .branch("tuist")),
     .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMajor(from: "0.4.3")),
     .package(url: "https://github.com/fortmarek/SwiftGen", .branch("stable")),
@@ -202,6 +202,7 @@ func targets() -> [Target] {
             name: "TuistCore",
             hasIntegrationTests: true,
             dependencies: [
+                .target(name: "ProjectDescription"),
                 .target(name: "TuistSupport"),
                 .target(name: "TuistGraph"),
             ],
@@ -508,14 +509,16 @@ func targets() -> [Target] {
         Target.module(
             name: "TuistDependencies",
             dependencies: [
+                .target(name: "ProjectDescription"),
                 .target(name: "TuistCore"),
                 .target(name: "TuistGraph"),
                 .target(name: "TuistSupport"),
             ],
             testDependencies: [
                 .target(name: "TuistCoreTesting"),
-                .target(name: "TuistSupportTesting"),
                 .target(name: "TuistGraphTesting"),
+                .target(name: "TuistLoaderTesting"),
+                .target(name: "TuistSupportTesting"),
             ],
             testingDependencies: [
                 .target(name: "TuistGraphTesting"),
